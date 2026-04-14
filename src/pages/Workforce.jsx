@@ -1,60 +1,7 @@
 import { useState, useEffect } from 'react'
+import { fetchBLS } from '../lib/apis'
 
 const TABS = ['Overview', 'Job Demand', 'Certifications', 'Education Pipeline', 'Federal Contracts']
-
-const BLS_API = 'https://api.bls.gov/publicAPI/v2/timeseries/data/'
-
-const SERIES_IDS = [
-  'SMU4832580000000001', // McAllen total nonfarm employment
-  'SMU4829700000000001', // Laredo total nonfarm employment
-  'SMU4815180000000001', // Brownsville total nonfarm employment
-  'SMU4832580200000001', // McAllen construction
-  'SMU4832580300000001', // McAllen manufacturing
-  'SMU4832580400000001', // McAllen trade/transport/utilities
-  'SMU4832580600000001', // McAllen professional & business services
-  'SMU4832580650000001', // McAllen education & health services
-  'SMU4832580900000001', // McAllen government
-  'LAUMT482258000000003', // McAllen unemployment rate
-  'LAUMT482970000000003', // Laredo unemployment rate
-  'LAUMT481518000000003', // Brownsville unemployment rate
-]
-
-const BLS_CACHE_KEY = 'riodata_bls_workforce_v1'
-const BLS_CACHE_TTL = 6 * 60 * 60 * 1000 // 6 hours
-
-function getCachedBLS() {
-  try {
-    const raw = localStorage.getItem(BLS_CACHE_KEY)
-    if (!raw) return null
-    const { data, ts } = JSON.parse(raw)
-    if (Date.now() - ts > BLS_CACHE_TTL) return null
-    return data
-  } catch { return null }
-}
-
-function cacheBLS(data) {
-  try { localStorage.setItem(BLS_CACHE_KEY, JSON.stringify({ data, ts: Date.now() })) } catch {}
-}
-
-async function fetchBLSData() {
-  const cached = getCachedBLS()
-  if (cached) return { data: cached, source: 'cache' }
-  const res = await fetch(BLS_API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      seriesid: SERIES_IDS,
-      startyear: '2022',
-      endyear: '2024',
-    })
-  })
-  const json = await res.json()
-  if (json.status !== 'REQUEST_SUCCEEDED') throw new Error(json.message?.[0] || 'BLS API error')
-  const mapped = {}
-  json.Results.series.forEach(s => { mapped[s.seriesID] = s.data })
-  cacheBLS(mapped)
-  return { data: mapped, source: 'api' }
-}
 
 function latestVal(data, id) {
   const s = data?.[id]
@@ -93,8 +40,8 @@ export default function Workforce() {
   const [blsPeriod, setBlsPeriod] = useState('')
 
   useEffect(() => {
-    fetchBLSData()
-      .then(({ data }) => {
+    fetchBLS()
+      .then(data => {
         setBls(data)
         const first = Object.values(data)[0]
         if (first?.[0]) setBlsPeriod(`${first[0].periodName} ${first[0].year}`)
