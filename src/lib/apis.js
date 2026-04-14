@@ -606,7 +606,7 @@ const STARBASE_LAUNCHPAD = '5e9e4502f509094188566f88'
 
 // ─── SpaceX Launches ──────────────────────────────────────────────────────────
 export async function fetchSpaceXLaunches() {
-  const ckey = 'rd_spacex_launches_v2'
+  const ckey = 'rd_spacex_launches_v3'  // bumped: removed launchpad filter on upcoming
   const cached = getCache(ckey)
   if (cached) return cached
 
@@ -615,16 +615,17 @@ export async function fetchSpaceXLaunches() {
     fetch('https://api.spacexdata.com/v5/launches/past'),
   ])
 
-  const allUpcoming = upRes.status === 'fulfilled' && upRes.value.ok
+  // No launchpad filter on upcoming — SpaceX may assign different pad IDs
+  // for Starship variants/configurations, causing valid launches to be silently dropped.
+  const upcoming = upRes.status === 'fulfilled' && upRes.value.ok
     ? await upRes.value.json()
     : []
+
   const allPast = pastRes.status === 'fulfilled' && pastRes.value.ok
     ? await pastRes.value.json()
     : []
 
-  // Filter for Starbase / Boca Chica only
-  const upcoming = allUpcoming.filter(l => l.launchpad === STARBASE_LAUNCHPAD)
-  // API returns oldest-first; slice(-10) gives the 10 most recent Starbase launches
+  // Past: keep Starbase filter for launch history accuracy
   const past = allPast.filter(l => l.launchpad === STARBASE_LAUNCHPAD).slice(-10)
 
   const data = { upcoming, past }

@@ -26,33 +26,59 @@ function LiveBadge() {
   return <span className="text-xs px-1.5 py-0.5 bg-[#E4F0EA] text-[#2A6B43] rounded font-medium">Live</span>
 }
 
+// ─── Launch date formatter (handles low-precision SpaceX dates) ────────────────
+function fmtLaunchDate(isoDate, precision) {
+  if (!isoDate) return null
+  const d = new Date(isoDate)
+  const year = d.getFullYear()
+  const month = d.getMonth() // 0-based
+  if (precision === 'year')    return `${year}`
+  if (precision === 'half')    return `${month < 6 ? 'H1' : 'H2'} ${year}`
+  if (precision === 'quarter') return `Q${Math.floor(month / 3) + 1} ${year}`
+  if (precision === 'month')   return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 // ─── Starbase countdown (ticks every second) ───────────────────────────────────
-function StarbaseCountdown({ isoDate }) {
+function StarbaseCountdown({ isoDate, datePrecision, missionName }) {
   const [tick, setTick] = useState(0)
   useEffect(() => {
     const id = setInterval(() => setTick(t => t + 1), 1000)
     return () => clearInterval(id)
   }, [])
+
   if (!isoDate) {
     return (
-      <div className="flex flex-col items-center gap-1">
-        <span className="font-mono text-3xl font-bold text-white tracking-widest">TBD</span>
-        <span className="text-[10px] text-slate-400 uppercase tracking-wider">Next launch window</span>
+      <div className="flex flex-col items-start gap-1">
+        <span className="font-mono text-xl font-bold text-slate-300 leading-tight">Not yet announced</span>
+        <span className="text-[10px] text-slate-500 uppercase tracking-wider">Next launch date not yet announced</span>
       </div>
     )
   }
+
+  // Low-precision dates: show formatted label instead of a countdown
+  const LOW_PREC = ['quarter', 'half', 'year', 'month']
+  if (datePrecision && LOW_PREC.includes(datePrecision)) {
+    return (
+      <div className="flex flex-col items-start gap-1">
+        <span className="font-mono text-2xl font-bold text-white">{fmtLaunchDate(isoDate, datePrecision)}</span>
+        {missionName && <span className="text-[10px] text-slate-400">{missionName}</span>}
+      </div>
+    )
+  }
+
   const diff = new Date(isoDate) - Date.now()
   if (diff <= 0) {
     return <span className="font-mono text-xl font-bold text-[#34D399] tracking-wide">LAUNCH WINDOW OPEN</span>
   }
-  const d = Math.floor(diff / 86400000)
-  const h = Math.floor((diff % 86400000) / 3600000)
-  const m = Math.floor((diff % 3600000) / 60000)
-  const s = Math.floor((diff % 60000) / 1000)
-  const pad = n => String(n).padStart(2, '0')
+  const days = Math.floor(diff / 86400000)
+  const hrs  = Math.floor((diff % 86400000) / 3600000)
+  const mins = Math.floor((diff % 3600000) / 60000)
+  const secs = Math.floor((diff % 60000) / 1000)
+  const pad  = n => String(n).padStart(2, '0')
   return (
     <div className="flex items-end gap-3">
-      {[[d,'D'],[h,'H'],[m,'M'],[s,'S']].map(([v,u]) => (
+      {[[days,'D'],[hrs,'H'],[mins,'M'],[secs,'S']].map(([v,u]) => (
         <div key={u} className="flex flex-col items-center">
           <span className="font-mono text-2xl font-bold text-white leading-none">{pad(v)}</span>
           <span className="text-[10px] text-slate-400 mt-1 tracking-widest">{u}</span>
@@ -63,12 +89,14 @@ function StarbaseCountdown({ isoDate }) {
 }
 
 // ─── Starbase static data ──────────────────────────────────────────────────────
+// proj is computed dynamically in the chart: year >= currentYear means in-progress/projected
 const STARBASE_LAUNCHES = [
-  { year: '2021', count: 5, proj: false },  // SN8, SN9, SN10, SN11, SN15 prototype hops
-  { year: '2022', count: 0, proj: false },  // Stack integration & ground testing
-  { year: '2023', count: 2, proj: false },  // IFT-1 (Apr 20), IFT-2 (Nov 18)
-  { year: '2024', count: 6, proj: false },  // IFT-3 through IFT-6 + additional tests
-  { year: '2025', count: 8, proj: true  },  // FAA projected / year-in-progress
+  { year: '2021', count: 5 },  // SN8–SN15 prototype hops
+  { year: '2022', count: 0 },  // Stack integration & ground testing
+  { year: '2023', count: 2 },  // IFT-1 (Apr), IFT-2 (Nov)
+  { year: '2024', count: 6 },  // IFT-3 through IFT-8
+  { year: '2025', count: 9 },  // IFT-9 through IFT-11 + additional
+  { year: '2026', count: 3 },  // Year in progress
 ]
 
 const STARBASE_SUPPLIERS = [
@@ -478,8 +506,16 @@ export default function Analytics() {
             {/* Countdown */}
             <div>
               <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3">Next Starbase Launch</div>
-              <StarbaseCountdown isoDate={null} />
-              <p className="text-[10px] text-slate-500 mt-2">Starship schedule at spacex.com · Countdown activates when date announced</p>
+              <StarbaseCountdown
+                isoDate={spacex?.upcoming?.[0]?.date_utc ?? null}
+                datePrecision={spacex?.upcoming?.[0]?.date_precision}
+                missionName={spacex?.upcoming?.[0]?.name}
+              />
+              <p className="text-[10px] text-slate-500 mt-2">
+                {spacex?.upcoming?.[0]?.name
+                  ? `Upcoming: ${spacex.upcoming[0].name}`
+                  : 'Schedule at spacex.com · Countdown activates when date confirmed'}
+              </p>
             </div>
 
             {/* Economic quick-hits */}
@@ -2223,50 +2259,74 @@ export default function Analytics() {
           {/* Next launch + launch history */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div className="bg-white/5 border border-white/8 rounded-xl p-5">
-              <div className="text-xs font-bold uppercase tracking-widest text-[#34D399] mb-3">Next Launch</div>
+              <div className="text-xs font-bold uppercase tracking-widest text-[#34D399] mb-3">
+                {spacex?.upcoming?.length > 0 ? 'Next Launch' : 'Last Launch'}
+              </div>
               {status.spacex === 'loading' ? (
                 <div className="h-16 bg-white/5 rounded animate-pulse" />
               ) : spacex?.upcoming?.length > 0 ? (
                 (() => {
                   const next = spacex.upcoming[0]
-                  const diff = next.date_utc ? new Date(next.date_utc) - Date.now() : null
+                  const prec = next.date_precision
+                  const lowPrec = prec && ['quarter','half','year','month'].includes(prec)
+                  const diff = !lowPrec && next.date_utc ? new Date(next.date_utc) - Date.now() : null
                   const days = diff > 0 ? Math.floor(diff / 86400000) : null
                   return (
                     <>
                       <div className="font-mono text-3xl font-bold text-white mb-1">
-                        {days != null ? `T-${days}d` : 'TBD'}
+                        {lowPrec
+                          ? fmtLaunchDate(next.date_utc, prec)
+                          : days != null ? `T-${days}d` : 'TBD'}
                       </div>
                       <div className="text-xs text-slate-400">{next.name}</div>
-                      {next.date_utc && (
+                      {!lowPrec && next.date_utc && days != null && (
                         <div className="text-[10px] text-slate-500 mt-1">
-                          {new Date(next.date_utc).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                          {fmtLaunchDate(next.date_utc, 'day')}
                         </div>
                       )}
                     </>
                   )
                 })()
+              ) : spacex?.past?.length > 0 ? (
+                (() => {
+                  const last = spacex.past[spacex.past.length - 1]
+                  return (
+                    <>
+                      <div className="text-base font-bold text-slate-300 mb-1">{last.name}</div>
+                      <div className="text-[10px] text-slate-500">
+                        {last.date_utc ? fmtLaunchDate(last.date_utc, 'day') : 'Date unknown'}
+                      </div>
+                      <div className="text-[10px] text-slate-600 mt-2">Next launch date not yet announced</div>
+                    </>
+                  )
+                })()
               ) : (
-                <div className="font-mono text-3xl font-bold text-white">TBD</div>
+                <div className="text-sm text-slate-400">Next launch date not yet announced</div>
               )}
             </div>
 
             <div className="bg-white/5 border border-white/8 rounded-xl p-5">
               <div className="text-xs font-bold uppercase tracking-widest text-[#34D399] mb-3">Launch History</div>
               <div className="flex items-end gap-2 h-20">
-                {STARBASE_LAUNCHES.map(d => (
-                  <div key={d.year} className="flex-1 flex flex-col items-center gap-1">
-                    <div className="w-full rounded-sm"
-                      style={{
-                        height: `${(d.count / 10) * 100}%`,
-                        background: d.proj ? 'rgba(52,211,153,.4)' : '#34D399',
-                        minHeight: d.count > 0 ? '8px' : '2px',
-                      }} />
-                    <span className="text-[9px] text-slate-500">{d.year.slice(2)}</span>
-                    <span className="text-[9px] text-slate-400 font-bold">{d.count}</span>
-                  </div>
-                ))}
+                {STARBASE_LAUNCHES.map(d => {
+                  const proj = parseInt(d.year) >= new Date().getFullYear()
+                  return (
+                    <div key={d.year} className="flex-1 flex flex-col items-center gap-1">
+                      <div className="w-full rounded-sm"
+                        style={{
+                          height: `${(d.count / 10) * 100}%`,
+                          background: proj ? 'rgba(52,211,153,.4)' : '#34D399',
+                          minHeight: d.count > 0 ? '8px' : '2px',
+                        }} />
+                      <span className="text-[9px] text-slate-500">{d.year.slice(2)}</span>
+                      <span className="text-[9px] text-slate-400 font-bold">
+                        {d.count}{proj && d.count > 0 ? '*' : ''}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
-              <p className="text-[9px] text-slate-600 mt-1">* 2025 projected · Source: SpaceX API</p>
+              <p className="text-[9px] text-slate-600 mt-1">* In progress / projected · Source: SpaceX API</p>
             </div>
           </div>
 
