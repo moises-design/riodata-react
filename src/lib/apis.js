@@ -558,6 +558,136 @@ export async function fetchRegionalNews() {
   return articles
 }
 
+// ─── CMS Hospital Data ────────────────────────────────────────────────────────
+// Provider data for hospitals in Hidalgo, Cameron, Webb counties
+export async function fetchCMSHospitals() {
+  const ckey = 'rd_cms_hospitals_v1'
+  const cached = getCache(ckey)
+  if (cached) return cached
+
+  // CMS Provider of Services - filter TX hospitals by county FIPS
+  // Hidalgo=48215, Cameron=48061, Webb=48479
+  const url = 'https://data.cms.gov/provider-data/api/1/datastore/query/xubh-q36u/0?limit=200&filter[STATE]=TX&filter[PRVDR_CTGRY_SBTYP_CD]=01'
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`CMS: HTTP ${res.status}`)
+  const json = await res.json()
+  const rows = (json.results || []).filter(h => {
+    const zip = String(h.ZIP_CD || '')
+    // RGV zip codes: 785xx (Hidalgo/Cameron), 780xx (Webb/Laredo)
+    return zip.startsWith('785') || zip.startsWith('786') || zip.startsWith('780')
+  })
+
+  // Build summary
+  const beds = rows.reduce((s, h) => s + (parseInt(h.BED_CNT) || 0), 0)
+  const data = { hospitals: rows, count: rows.length, totalBeds: beds }
+  setCache(ckey, data, 24 * 60 * 60 * 1000) // 24 hours
+  return data
+}
+
+// ─── USGS Water Flow ──────────────────────────────────────────────────────────
+// Rio Grande at Laredo gauge site 08454100 — current flow rate
+export async function fetchUSGSWater() {
+  const ckey = 'rd_usgs_water_v1'
+  const cached = getCache(ckey)
+  if (cached) return cached
+
+  const url = 'https://waterservices.usgs.gov/nwis/iv/?format=json&sites=08454100&parameterCd=00060&siteType=ST'
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`USGS: HTTP ${res.status}`)
+  const json = await res.json()
+
+  const series = json.value?.timeSeries?.[0]
+  if (!series) throw new Error('USGS: no data')
+
+  const values = series.values?.[0]?.value || []
+  const latest = values[values.length - 1]
+
+  const data = {
+    siteName:   series.sourceInfo?.siteName || 'Rio Grande at Laredo',
+    value:      latest ? parseFloat(latest.value) : null,
+    units:      'cfs',
+    dateTime:   latest?.dateTime || null,
+    // build 7-day trend (last 24 readings at ~4 per hour = ~6 days)
+    trend: values.slice(-48).map(v => ({
+      t: v.dateTime,
+      v: parseFloat(v.value) || 0,
+    })),
+  }
+  setCache(ckey, data, 15 * 60 * 1000) // 15 minutes
+  return data
+}
+
+// ─── SpaceX Launches ──────────────────────────────────────────────────────────
+export async function fetchSpaceXLaunches() {
+  const ckey = 'rd_spacex_launches_v1'
+  const cached = getCache(ckey)
+  if (cached) return cached
+
+  const [upRes, pastRes] = await Promise.allSettled([
+    fetch('https://api.spacexdata.com/v5/launches/upcoming'),
+    fetch('https://api.spacexdata.com/v5/launches/past?limit=10'),
+  ])
+
+  const upcoming = upRes.status === 'fulfilled' && upRes.value.ok
+    ? await upRes.value.json()
+    : []
+  const past = pastRes.status === 'fulfilled' && pastRes.value.ok
+    ? await pastRes.value.json()
+    : []
+
+  const data = { upcoming, past: past.reverse().slice(-10) }
+  setCache(ckey, data, 60 * 60 * 1000) // 1 hour
+  return data
+}
+
+// ─── Census Housing Data ──────────────────────────────────────────────────────
+// ACS median home values by county for comparison
+export async function fetchCensusHousing() {
+  const ckey = 'rd_census_housing_v1'
+  const cached = getCache(ckey)
+  if (cached) return cached
+
+  // Counties: Hidalgo(48215), Cameron(48061), Webb(48479), Travis(48453/Austin), Dallas(48113), Harris(48201/Houston)
+  const counties = [
+    { name: 'McAllen',     state:'48', county:'215', group: 'rgv' },
+    { name: 'Brownsville', state:'48', county:'061', group: 'rgv' },
+    { name: 'Laredo',      state:'48', county:'479', group: 'rgv' },
+    { name: 'Austin',      state:'48', county:'453', group: 'tx'  },
+    { name: 'Dallas',      state:'48', county:'113', group: 'tx'  },
+    { name: 'Houston',     state:'48', county:'201', group: 'tx'  },
+  ]
+
+  const results = await Promise.allSettled(
+    counties.map(async c => {
+      // B25077_001E = Median home value, B25058_001E = Median contract rent, B25001_001E = housing units
+      const url = `https://api.census.gov/data/2022/acs/acs5?get=NAME,B25077_001E,B25058_001E,B25001_001E,B19013_001E&for=county:${c.county}&in=state:${c.state}&key=${KEYS.census}`
+      const res = await fetch(url)
+      const rows = await res.json()
+      if (!Array.isArray(rows) || !rows[1]) throw new Error('No data')
+      const [, homeValue, rent, units, income] = rows[1]
+      return { ...c, homeValue: parseInt(homeValue), rent: parseInt(rent), units: parseInt(units), income: parseInt(income) }
+    })
+  )
+
+  const data = results.filter(r => r.status === 'fulfilled').map(r => r.value)
+  if (!data.length) throw new Error('All Census housing requests failed')
+
+  // Building permits — Census API (BPS - Building Permits Survey)
+  let permits = []
+  try {
+    const bpsUrl = `https://api.census.gov/data/2022/bps/county?get=BLDGS,UNITS,NAME&for=county:215,061,479&in=state:48&key=${KEYS.census}`
+    const bpsRes = await fetch(bpsUrl)
+    const bpsRows = await bpsRes.json()
+    if (Array.isArray(bpsRows) && bpsRows.length > 1) {
+      permits = bpsRows.slice(1).map(r => ({ name: r[2], buildings: parseInt(r[0]) || 0, units: parseInt(r[1]) || 0 }))
+    }
+  } catch { /* building permits optional */ }
+
+  const out = { counties: data, permits }
+  setCache(ckey, out, 48 * 60 * 60 * 1000) // 48 hours
+  return out
+}
+
 // ─── Dallas Federal Reserve ───────────────────────────────────────────────────
 // Primary source: Dallas Fed series published on FRED (via our fred-proxy).
 // Bonus: also tries Dallas Fed direct APIs — silently falls back if CORS-blocked.

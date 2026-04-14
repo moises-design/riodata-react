@@ -1,1 +1,78 @@
 @import "tailwindcss";
+
+/* ── Page fade-in transition ──────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.min-h-screen,
+[class*="max-w-"] {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* ── Safe-area padding for mobile bottom nav ──────────────────────────────── */
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Smooth scrolling ─────────────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Touch-friendly chart wrappers ───────────────────────────────────────── */
+.recharts-wrapper {
+  touch-action: pan-y;
+}
+
+/* ── Skeleton pulse override ──────────────────────────────────────────────── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+.animate-pulse {
+  animation: pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ── Company pin hover ────────────────────────────────────────────────────── */
+.company-pin {
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+/* ── Mapbox popup override ────────────────────────────────────────────────── */
+.mapboxgl-popup-content {
+  padding: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15) !important;
+  overflow: hidden;
+}
+
+.mapboxgl-popup-tip {
+  display: none !important;
+}
+
+/* ── Auth modal full-screen on mobile ─────────────────────────────────────── */
+@media (max-width: 640px) {
+  .auth-modal-container {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+  .auth-modal-panel {
+    max-width: 100% !important;
+    border-radius: 24px 24px 0 0 !important;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* ── Mobile card full width ───────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .directory-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Remove extra scrollbars ──────────────────────────────────────────────── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}

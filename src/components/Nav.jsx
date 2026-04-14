@@ -46,6 +46,7 @@ export default function Nav() {
     ['Workforce',     '/workforce'],
     ['Companies',     '/directory'],
     ['Opportunities', '/opportunities'],
+    ['Membership',    '/membership'],
     ['About',         '/about'],
   ]
 
@@ -94,7 +95,7 @@ export default function Nav() {
 
               {/* Dropdown panel */}
               {dropOpen && (
-                <div className="absolute right-0 top-full mt-2 w-44 bg-white border border-[#E2DDD6] rounded-xl shadow-lg overflow-hidden z-[100]">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-[#E2DDD6] rounded-xl shadow-lg overflow-hidden z-[100]">
                   <Link to="/dashboard"
                     onClick={() => setDropOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-3 text-sm text-[#0F0F0E] hover:bg-[#F7F3EE] transition">
@@ -103,7 +104,12 @@ export default function Nav() {
                   <Link to="/profile"
                     onClick={() => setDropOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-3 text-sm text-[#0F0F0E] hover:bg-[#F7F3EE] transition border-t border-[#F0EDE8]">
-                    <span className="text-base">✏️</span> Edit Profile
+                    <span className="text-base">👤</span> Profile
+                  </Link>
+                  <Link to="/membership"
+                    onClick={() => setDropOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-3 text-sm text-[#0F0F0E] hover:bg-[#F7F3EE] transition border-t border-[#F0EDE8]">
+                    <span className="text-base">⭐</span> Membership
                   </Link>
                   <button
                     onClick={signOut}
@@ -146,6 +152,10 @@ export default function Nav() {
                 <Link to="/dashboard" onClick={() => setMenuOpen(false)}
                   className="py-3 px-4 text-[#7EC8D0] hover:text-white hover:bg-white/5 rounded-md text-sm font-semibold">
                   Dashboard
+                </Link>
+                <Link to="/profile" onClick={() => setMenuOpen(false)}
+                  className="py-3 px-4 text-white/70 hover:text-white hover:bg-white/5 rounded-md text-sm font-medium">
+                  Profile
                 </Link>
                 <div className="flex gap-2 mt-2 pt-2 border-t border-white/10">
                   <button onClick={() => { setMenuOpen(false); signOut() }}

@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { sb } from '../lib/supabase'
 import { fetchSavedIds, saveCompany, unsaveCompany, logActivity } from '../lib/db'
 
 const COLORS = ['#E3F0F1,#1A6B72','#F2E8E3,#B8431E','#FBF4E3,#B07D1A','#E4F0EA,#2A6B43','#EDE8F8,#5B3FA6']
 
 export default function Directory() {
+    const navigate = useNavigate()
     const [companies,  setCompanies]  = useState([])
     const [loading,    setLoading]    = useState(true)
     const [search,     setSearch]     = useState('')
     const [sector,     setSector]     = useState('')
     const [country,    setCountry]    = useState('')
-    const [selected,   setSelected]   = useState(null)
     const [savedIds,   setSavedIds]   = useState(new Set())
     const [userId,     setUserId]     = useState(null)
     const [savingId,   setSavingId]   = useState(null)   // id currently being toggled
@@ -60,8 +61,8 @@ export default function Directory() {
     }
 
     function openCompany(c) {
-        setSelected(c)
         if (userId) logActivity(userId, 'viewed_company', c.legal_name, c.id)
+        navigate(`/companies/${c.id}`)
     }
 
     return (
@@ -148,7 +149,7 @@ export default function Directory() {
                                     </div>
                                     <div className="flex justify-between items-center pt-3 border-t border-[#E2DDD6]">
                                         <span className="text-xs font-bold uppercase tracking-wider px-2 py-1 bg-[#E3F0F1] text-[#1A6B72] rounded">{c.sector||'General'}</span>
-                                        <span className="text-xs text-[#1A6B72] font-medium">View →</span>
+                                        <span className="text-xs text-[#1A6B72] font-medium">View Profile →</span>
                                     </div>
                                 </div>
                             )
@@ -157,48 +158,6 @@ export default function Directory() {
                 )}
             </div>
 
-            {/* COMPANY MODAL */}
-            {selected && (
-                <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={()=>setSelected(null)}>
-                    <div className="bg-white rounded-2xl p-8 max-w-lg w-full max-h-[85vh] overflow-y-auto relative" onClick={e=>e.stopPropagation()}>
-                        <div className="flex items-start justify-between mb-4">
-                            <div>
-                                <div className="text-xs text-[#1A6B72] font-bold uppercase tracking-wider mb-1">Company Profile</div>
-                                <h2 className="font-serif text-2xl font-bold">{selected.legal_name}</h2>
-                                <p className="text-sm text-[#5C5C54] mt-1">📍 {selected.city}{selected.state_province?', '+selected.state_province:''} {selected.country==='MX'?'🇲🇽':'🇺🇸'}</p>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                                {userId && (
-                                    <button
-                                        onClick={e=>toggleSave(e, selected.id, selected.legal_name)}
-                                        disabled={savingId === selected.id}
-                                        className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition ${savedIds.has(selected.id) ? 'bg-[#E3F0F1] border-[#B8D8DC] text-[#1A6B72]' : 'border-[#E2DDD6] text-[#5C5C54] hover:border-[#1A6B72] hover:text-[#1A6B72]'}`}
-                                    >
-                                        {savedIds.has(selected.id) ? '🔖 Saved' : '🔖 Save'}
-                                    </button>
-                                )}
-                                <button onClick={()=>setSelected(null)} className="w-7 h-7 rounded-full border border-[#E2DDD6] flex items-center justify-center text-[#5C5C54] hover:bg-[#F7F3EE]">✕</button>
-                            </div>
-                        </div>
-                        <div className="flex gap-2 flex-wrap mb-4">
-                            {selected.ready_to_work&&<span className="px-3 py-1 bg-[#E4F0EA] text-[#2A6B43] rounded-full text-xs font-bold">✅ Ready to Work</span>}
-                            <span className="px-3 py-1 bg-[#E3F0F1] text-[#1A6B72] rounded-full text-xs font-bold">{selected.sector}</span>
-                        </div>
-                        {selected.description&&<p className="text-sm text-[#5C5C54] leading-relaxed mb-4">{selected.description}</p>}
-                        {selected.services?.length>0&&(
-                            <div className="mb-4">
-                                <div className="text-xs font-bold uppercase tracking-wider text-[#5C5C54] mb-2">Services</div>
-                                <div className="flex flex-wrap gap-1">{selected.services.map(s=><span key={s} className="text-xs px-2 py-1 bg-[#F7F3EE] border border-[#E2DDD6] rounded text-[#5C5C54]">{s}</span>)}</div>
-                            </div>
-                        )}
-                        {selected.contact_email&&(
-                            <a href={`mailto:${selected.contact_email}`} className="block w-full py-3 bg-[#1A6B72] text-white text-center rounded-xl font-semibold text-sm mt-4">
-                                📧 Contact {selected.contact_name||'This Company'}
-                            </a>
-                        )}
-                    </div>
-                </div>
-            )}
         </div>
     )
 }

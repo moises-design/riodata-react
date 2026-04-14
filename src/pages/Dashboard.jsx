@@ -305,6 +305,9 @@ export default function Dashboard() {
                 {roleInfo.icon} {roleInfo.label}
               </span>
             )}
+            <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-[#FBF4E3] text-[#B07D1A] border border-[#E8D9A8]">
+              ⭐ Explorer
+            </span>
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <span className="text-[#5C5C54]">South Texas region</span>
@@ -461,14 +464,16 @@ export default function Dashboard() {
               ) : (
                 <div className="divide-y divide-[#F7F4F0]">
                   {savedCos.map(c => (
-                    <div key={c.id} className="px-6 py-3.5 flex items-center gap-3 hover:bg-[#FDFAF8] transition">
-                      <div className="w-9 h-9 rounded-lg bg-[#E3F0F1] flex items-center justify-center font-bold text-sm text-[#1A6B72] shrink-0">
-                        {(c.legal_name || '?')[0].toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm text-[#0F0F0E] truncate">{c.legal_name}</div>
-                        <div className="text-xs text-[#888780]">{c.city}{c.state_province ? ', ' + c.state_province : ''}{c.sector ? ' · ' + c.sector : ''}</div>
-                      </div>
+                    <div key={c.id} className="px-6 py-3.5 flex items-center gap-3 hover:bg-[#FDFAF8] transition group">
+                      <Link to={`/companies/${c.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-9 h-9 rounded-lg bg-[#E3F0F1] flex items-center justify-center font-bold text-sm text-[#1A6B72] shrink-0">
+                          {(c.legal_name || '?')[0].toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm text-[#0F0F0E] truncate group-hover:text-[#1A6B72] transition">{c.legal_name}</div>
+                          <div className="text-xs text-[#888780]">{c.city}{c.state_province ? ', ' + c.state_province : ''}{c.sector ? ' · ' + c.sector : ''}</div>
+                        </div>
+                      </Link>
                       <div className="flex items-center gap-2 shrink-0">
                         {c.ready_to_work && <span className="text-[10px] font-bold px-2 py-0.5 bg-[#E4F0EA] text-[#2A6B43] rounded-full">Ready</span>}
                         <button onClick={() => handleUnsave(c.id, c.legal_name)}
@@ -678,16 +683,17 @@ export default function Dashboard() {
         {/* ── QUICK LINKS ─────────────────────────────────────────────────── */}
         <div>
           <div className="text-xs font-bold uppercase tracking-widest text-[#888780] mb-4">Quick Links</div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {[
-              { icon: '📊', title: 'Analytics',         desc: 'Economic data & market trends',   path: '/analytics'     },
-              { icon: '🔍', title: 'Company Directory',  desc: 'Find & connect with businesses',  path: '/directory'     },
-              { icon: '📋', title: 'Opportunities',      desc: 'Active project bids & listings',  path: '/opportunities' },
-              { icon: '👤', title: 'Edit Profile',        desc: 'Update your info & preferences', path: '/profile'       },
+              { icon: '📊', title: 'Analytics',      desc: 'Economic data & trends',  path: '/analytics'   },
+              { icon: '🔍', title: 'Directory',       desc: 'Find & connect',          path: '/directory'   },
+              { icon: '📋', title: 'Opportunities',   desc: 'Active bids & listings',  path: '/opportunities'},
+              { icon: '🗺️', title: 'Map',             desc: 'Interactive company map', path: '/map'         },
+              { icon: '⭐', title: 'Membership',      desc: 'Upgrade your plan',       path: '/membership'  },
             ].map(a => (
               <button key={a.title} onClick={() => navigate(a.path)}
-                className="bg-white border border-[#E2DDD6] rounded-xl p-5 text-left hover:border-[#1A6B72] hover:-translate-y-0.5 hover:shadow-md transition-all group">
-                <div className="text-2xl mb-3">{a.icon}</div>
+                className="bg-white border border-[#E2DDD6] rounded-xl p-4 text-left hover:border-[#1A6B72] hover:-translate-y-0.5 hover:shadow-md transition-all group">
+                <div className="text-2xl mb-2">{a.icon}</div>
                 <div className="font-semibold text-sm text-[#0F0F0E] group-hover:text-[#1A6B72] transition">{a.title}</div>
                 <div className="text-xs text-[#B8B4AE] mt-0.5">{a.desc}</div>
               </button>
