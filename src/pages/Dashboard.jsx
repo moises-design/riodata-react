@@ -88,13 +88,15 @@ export default function Dashboard() {
     async function init(session) {
       if (!session) { setLoading(false); return }
       setUser(session.user)
-      // maybeSingle() returns null (not 406) when no row matches
-      const [{ data: prof }, { data: comp }] = await Promise.all([
-        sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle(),
-        sb.from('companies').select('*').eq('contact_email', session.user.email).maybeSingle(),
-      ])
-      setProfile(prof)
-      setCompany(comp)
+      try {
+        // maybeSingle() returns null (not 406) when no row matches
+        const [{ data: prof }, { data: comp }] = await Promise.all([
+          sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle(),
+          sb.from('companies').select('*').eq('contact_email', session.user.email).maybeSingle(),
+        ])
+        setProfile(prof)
+        setCompany(comp)
+      } catch { /* ignore */ }
       finally { setLoading(false) }
     }
 
