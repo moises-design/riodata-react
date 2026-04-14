@@ -52,7 +52,7 @@ export default function Nav() {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 bg-white/98 backdrop-blur border-b border-[#E2DDD6] h-14 flex items-center px-14 relative">
+      <nav className="sticky top-0 z-50 bg-white/98 backdrop-blur border-b border-[#E2DDD6] h-14 flex items-center px-4 sm:px-14 relative">
         <Link to="/" className="font-serif text-xl font-bold text-[#0F0F0E] mr-12 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-[#1A6B72]"></span>
           RioData

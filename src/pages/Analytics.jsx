@@ -357,7 +357,7 @@ export default function Analytics() {
       </div>
 
       {/* KPI GRID */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
         {[
           {
             val:   totalGDP ? fmtGDP(totalGDP) : '$48.2B*',
@@ -390,7 +390,7 @@ export default function Analytics() {
             live:  urLive,
           },
         ].map(k => (
-          <div key={k.label} className="bg-white border border-[#E2DDD6] rounded-xl p-4">
+          <div key={k.label} className="bg-white border border-[#E2DDD6] rounded-xl p-4 min-w-0 overflow-hidden">
             <div className="flex items-start justify-between mb-0.5">
               <div className="font-serif text-2xl font-bold text-[#0F0F0E]">{k.val}</div>
               {k.live && <LiveBadge />}

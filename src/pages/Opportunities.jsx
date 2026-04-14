@@ -65,18 +65,18 @@ export default function Opportunities() {
 
     return (
         <div>
-            <div className="bg-[#0F0F0E] px-14 pt-11 pb-8">
+            <div className="bg-[#0F0F0E] px-4 sm:px-14 pt-8 sm:pt-11 pb-8">
                 <div className="text-xs font-bold tracking-widest text-[#E87850]/80 uppercase mb-2">Project Opportunities</div>
-                <div className="flex justify-between items-end">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
                     <div>
-                        <h1 className="font-serif text-5xl font-bold tracking-tight text-white mb-1">Active Projects</h1>
+                        <h1 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight text-white mb-1">Active Projects</h1>
                         <p className="text-sm text-white/40">{display.length} open opportunities across the region</p>
                     </div>
-                    <button className="px-4 py-2 bg-[#1A6B72] text-white rounded-lg text-sm font-semibold">+ Post a Project</button>
+                    <button className="sm:flex-shrink-0 px-4 py-2 bg-[#1A6B72] text-white rounded-lg text-sm font-semibold self-start sm:self-auto">+ Post a Project</button>
                 </div>
             </div>
 
-            <div className="px-14 py-8 bg-[#F7F3EE]">
+            <div className="px-4 sm:px-14 py-8 bg-[#F7F3EE]">
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {Array(4).fill(0).map((_,i)=>(

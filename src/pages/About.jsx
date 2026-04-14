@@ -1,11 +1,11 @@
 export default function About() {
     return (
         <div>
-            <div className="bg-[#0F0F0E] px-14 py-20">
+            <div className="bg-[#0F0F0E] px-4 sm:px-14 py-12 sm:py-20">
                 <div className="text-xs font-bold tracking-widest text-[#E87850]/80 uppercase mb-4 flex items-center gap-2">
                     <span className="w-4 h-px bg-[#B8431E]"></span>Our Mission
                 </div>
-                <h1 className="font-serif text-6xl font-bold tracking-tight text-white mb-6 max-w-3xl">
+                <h1 className="font-serif text-4xl sm:text-6xl font-bold tracking-tight text-white mb-6 max-w-3xl">
                     Built for the region.<br />
                     <em className="not-italic text-[#B8431E]">By the region.</em>
                 </h1>
@@ -14,7 +14,7 @@ export default function About() {
                 </p>
             </div>
 
-            <div className="px-14 py-20 bg-white">
+            <div className="px-4 sm:px-14 py-12 sm:py-20 bg-white">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
                     <div>
                         <h2 className="font-serif text-3xl font-bold mb-4">Why we built this</h2>
@@ -51,7 +51,7 @@ export default function About() {
                 </div>
             </div>
 
-            <div className="px-14 py-16 bg-[#F7F3EE]">
+            <div className="px-4 sm:px-14 py-12 sm:py-16 bg-[#F7F3EE]">
                 <h2 className="font-serif text-3xl font-bold mb-8 text-center">The numbers behind the region</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[
@@ -72,7 +72,7 @@ export default function About() {
                 </div>
             </div>
 
-            <div className="px-14 py-16 bg-[#0F0F0E] text-center">
+            <div className="px-4 sm:px-14 py-12 sm:py-16 bg-[#0F0F0E] text-center">
                 <h2 className="font-serif text-4xl font-bold text-white mb-4">Ready to get listed?</h2>
                 <p className="text-sm text-white/40 mb-8">Free. 8 minutes. No credit card.</p>
                 <a href="/onboarding" className="px-8 py-4 bg-[#1A6B72] text-white rounded-xl font-semibold hover:bg-[#155960] transition-all">

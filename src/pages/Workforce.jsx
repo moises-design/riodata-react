@@ -51,50 +51,57 @@ export default function Workforce() {
   }, [])
 
   return (
-    <div className="px-14 py-12">
+    <div className="px-4 sm:px-14 py-8 sm:py-12">
       <div className="text-xs font-bold tracking-widest text-[#B8431E] uppercase mb-2 flex items-center gap-2">
         <span className="w-4 h-px bg-[#B8431E]"></span>Talent Pipeline
       </div>
-      <div className="flex items-end justify-between mb-6">
-        <div>
-          <h1 className="font-serif text-5xl font-bold tracking-tight text-[#0F0F0E] mb-2">Workforce Intelligence</h1>
-          <p className="text-sm text-[#5C5C54]">Skills gaps, certifications, and career pathways matched to regional employer demand.</p>
-        </div>
-        <div className="pb-1 text-right">
-          {blsStatus === 'loading' && (
-            <div className="flex items-center gap-2 text-xs text-[#5C5C54]">
-              <div className="w-4 h-4 border border-[#E2DDD6] border-t-[#1A6B72] rounded-full animate-spin"></div>
-              Loading BLS data...
-            </div>
-          )}
-          {blsStatus === 'ok' && (
-            <div className="text-xs text-[#5C5C54] flex items-center gap-1.5">
-              <span className="w-2 h-2 bg-[#2A6B43] rounded-full"></span>
-              BLS data · {blsPeriod}
-            </div>
-          )}
-          {blsStatus === 'error' && (
-            <div className="text-xs text-[#B8431E] flex items-center gap-1.5">
-              <span className="w-2 h-2 bg-[#B8431E] rounded-full"></span>
-              BLS offline · showing estimates
-            </div>
-          )}
+
+      {/* HEADER: title + BLS badge */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+          <div>
+            <h1 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight text-[#0F0F0E] mb-2">Workforce Intelligence</h1>
+            <p className="text-sm text-[#5C5C54]">Skills gaps, certifications, and career pathways matched to regional employer demand.</p>
+          </div>
+          {/* BLS badge — visible on desktop only inline; on mobile it falls below */}
+          <div className="pb-1 sm:text-right sm:flex-shrink-0">
+            {blsStatus === 'loading' && (
+              <div className="flex items-center gap-2 text-xs text-[#5C5C54]">
+                <div className="w-4 h-4 border border-[#E2DDD6] border-t-[#1A6B72] rounded-full animate-spin"></div>
+                Loading BLS data...
+              </div>
+            )}
+            {blsStatus === 'ok' && (
+              <div className="text-xs text-[#5C5C54] flex items-center gap-1.5">
+                <span className="w-2 h-2 bg-[#2A6B43] rounded-full"></span>
+                BLS data · {blsPeriod}
+              </div>
+            )}
+            {blsStatus === 'error' && (
+              <div className="text-xs text-[#B8431E] flex items-center gap-1.5">
+                <span className="w-2 h-2 bg-[#B8431E] rounded-full"></span>
+                BLS offline · showing estimates
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* TABS */}
-      <div className="flex gap-0 mb-8 border-b border-[#E2DDD6]">
-        {TABS.map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-5 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              tab === t ? 'text-[#0F0F0E] border-[#0F0F0E]' : 'text-[#5C5C54] border-transparent hover:text-[#0F0F0E]'
-            }`}
-          >
-            {t}
-          </button>
-        ))}
+      {/* TABS — horizontally scrollable on mobile */}
+      <div className="overflow-x-auto -mx-4 sm:mx-0 mb-8">
+        <div className="flex gap-0 border-b border-[#E2DDD6] min-w-max px-4 sm:px-0 sm:min-w-0">
+          {TABS.map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-5 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${
+                tab === t ? 'text-[#0F0F0E] border-[#0F0F0E]' : 'text-[#5C5C54] border-transparent hover:text-[#0F0F0E]'
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
       </div>
 
       {tab === 'Overview' && <OverviewTab bls={bls} blsStatus={blsStatus} />}
@@ -230,12 +237,12 @@ function OverviewTab({ bls, blsStatus }) {
         </div>
       </div>
 
-      <div className="bg-[#0F0F0E] rounded-2xl p-8 flex items-center justify-between">
+      <div className="bg-[#0F0F0E] rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="font-serif text-2xl font-bold text-white mb-2">Are you a university or EDC?</div>
+          <div className="font-serif text-xl sm:text-2xl font-bold text-white mb-2">Are you a university or EDC?</div>
           <div className="text-sm text-white/50">Full workforce intelligence dashboard with API data, grant-ready reports, and custom program ROI analysis.</div>
         </div>
-        <a href="/onboarding" className="flex-shrink-0 ml-8 px-6 py-3 bg-[#1A6B72] text-white rounded-xl font-semibold text-sm hover:bg-[#155960]">
+        <a href="/onboarding" className="sm:flex-shrink-0 sm:ml-8 px-6 py-3 bg-[#1A6B72] text-white rounded-xl font-semibold text-sm hover:bg-[#155960] text-center">
           Learn About Licensing →
         </a>
       </div>
@@ -295,12 +302,12 @@ function JobDemandTab({ bls, blsStatus }) {
           <div className="text-xs text-[#5C5C54] mb-5">Wage, growth rate, and sector</div>
           <div className="space-y-1">
             {occupations.map(o => (
-              <div key={o.label} className="flex items-center justify-between py-2 border-b border-[#F7F3EE] last:border-0">
-                <div>
-                  <div className="text-sm font-semibold text-[#0F0F0E]">{o.label}</div>
+              <div key={o.label} className="flex items-center justify-between py-2 border-b border-[#F7F3EE] last:border-0 gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold text-[#0F0F0E] truncate">{o.label}</div>
                   <div className="text-xs text-[#5C5C54]">{o.sector}</div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <div className="text-right">
                     <div className="text-sm font-bold text-[#0F0F0E]">{o.wage}</div>
                     <div className="text-xs text-[#5C5C54]">avg</div>
@@ -324,14 +331,14 @@ function JobDemandTab({ bls, blsStatus }) {
             const val = sectorVals[i]
             const change = yoy(bls, s.id)
             return (
-              <div key={s.id} className="flex items-center gap-4">
-                <div className="text-xs text-[#5C5C54] w-36 flex-shrink-0">{s.label}</div>
-                <div className="flex-1 h-5 bg-[#F7F3EE] rounded overflow-hidden">
+              <div key={s.id} className="flex items-center gap-2 sm:gap-4">
+                <div className="text-xs text-[#5C5C54] w-28 sm:w-36 flex-shrink-0 truncate">{s.label}</div>
+                <div className="flex-1 h-5 bg-[#F7F3EE] rounded overflow-hidden min-w-0">
                   <div className="h-full rounded transition-all" style={{ width: val ? `${(val / maxSector) * 100}%` : '30%', background: s.color, opacity: val ? 1 : 0.25 }}></div>
                 </div>
-                <div className="text-xs font-bold w-16 text-right">{val ? fmtJobs(val * 1000) : '—'}</div>
+                <div className="text-xs font-bold w-12 sm:w-16 text-right flex-shrink-0">{val ? fmtJobs(val * 1000) : '—'}</div>
                 {change && (
-                  <div className={`text-xs font-semibold w-12 text-right ${parseFloat(change) >= 0 ? 'text-[#2A6B43]' : 'text-[#B8431E]'}`}>
+                  <div className={`hidden sm:block text-xs font-semibold w-12 text-right flex-shrink-0 ${parseFloat(change) >= 0 ? 'text-[#2A6B43]' : 'text-[#B8431E]'}`}>
                     {parseFloat(change) >= 0 ? '+' : ''}{change}%
                   </div>
                 )}
