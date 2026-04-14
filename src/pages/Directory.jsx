@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { sb } from '../lib/supabase'
 import { fetchSavedIds, saveCompany, unsaveCompany, logActivity } from '../lib/db'
+import AuthModal from '../components/AuthModal'
 
 const COLORS = ['#E3F0F1,#1A6B72','#F2E8E3,#B8431E','#FBF4E3,#B07D1A','#E4F0EA,#2A6B43','#EDE8F8,#5B3FA6']
 
@@ -14,7 +15,8 @@ export default function Directory() {
     const [country,    setCountry]    = useState('')
     const [savedIds,   setSavedIds]   = useState(new Set())
     const [userId,     setUserId]     = useState(null)
-    const [savingId,   setSavingId]   = useState(null)   // id currently being toggled
+    const [savingId,   setSavingId]   = useState(null)
+    const [authModal,  setAuthModal]  = useState(null)
 
     // Load auth + saved IDs on mount
     useEffect(() => {
@@ -42,7 +44,7 @@ export default function Directory() {
 
     async function toggleSave(e, companyId, companyName) {
         e.stopPropagation()
-        if (!userId) return   // user not signed in — could open auth modal here
+        if (!userId) { setAuthModal('signin'); return }
         if (savingId === companyId) return
         setSavingId(companyId)
         const isSaved = savedIds.has(companyId)
@@ -66,7 +68,7 @@ export default function Directory() {
     }
 
     return (
-        <div>
+        <>
             {/* HEADER */}
             <div className="bg-[#0F0F0E] px-14 pt-11 pb-0">
                 <div className="text-xs font-bold tracking-widest text-[#E87850]/80 uppercase mb-2">Business Directory</div>
@@ -158,6 +160,7 @@ export default function Directory() {
                 )}
             </div>
 
-        </div>
+        {authModal && <AuthModal initialTab={authModal} onClose={() => setAuthModal(null)} />}
+        </>
     )
 }

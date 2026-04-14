@@ -1,19 +1,22 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { sb } from '../lib/supabase'
 import { upsertProfile, ROLES } from '../lib/db'
 import AuthModal from '../components/AuthModal'
 
-const SECTORS = ['Construction', 'Energy', 'Manufacturing', 'Logistics', 'Technology', 'Healthcare', 'Government', 'Other']
+const SECTORS = ['Construction', 'Energy', 'Manufacturing', 'Logistics', 'Technology', 'Healthcare', 'Government', 'Agriculture', 'Other']
 const COMPLETION_FIELDS = ['full_name', 'phone', 'role', 'sector', 'city', 'bio']
 
 export default function Profile() {
-  const [user,      setUser]      = useState(null)
-  const [loading,   setLoading]   = useState(true)
-  const [saving,    setSaving]    = useState(false)
-  const [saved,     setSaved]     = useState(false)
-  const [error,     setError]     = useState('')
-  const [authModal, setAuthModal] = useState(null)
+  const [user,         setUser]         = useState(null)
+  const [loading,      setLoading]      = useState(true)
+  const [saving,       setSaving]       = useState(false)
+  const [saved,        setSaved]        = useState(false)
+  const [error,        setError]        = useState('')
+  const [authModal,    setAuthModal]    = useState(null)
+  const [avatarUrl,    setAvatarUrl]    = useState(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const fileInputRef = useRef(null)
   const [form, setForm] = useState({
     full_name:     '',
     phone:         '',
@@ -50,8 +53,30 @@ export default function Profile() {
         bio:          data.bio          || '',
         email_digest: data.email_digest || false,
       })
+      if (data.avatar_url) setAvatarUrl(data.avatar_url)
     }
     setLoading(false)
+  }
+
+  async function handleAvatarChange(e) {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    if (file.size > 5 * 1024 * 1024) { setError('Photo must be under 5MB.'); return }
+
+    setAvatarUploading(true)
+    setError('')
+    const ext  = file.name.split('.').pop()
+    const path = `${user.id}/avatar.${ext}`
+
+    const { error: upErr } = await sb.storage.from('avatars').upload(path, file, { upsert: true })
+    if (upErr) { setError('Upload failed: ' + upErr.message); setAvatarUploading(false); return }
+
+    const { data: { publicUrl } } = sb.storage.from('avatars').getPublicUrl(path)
+    setAvatarUrl(publicUrl)
+
+    // Persist to profile immediately
+    await upsertProfile(user.id, { avatar_url: publicUrl }).catch(() => {})
+    setAvatarUploading(false)
   }
 
   const filledCount     = COMPLETION_FIELDS.filter(f => form[f] && String(form[f]).trim()).length
@@ -64,7 +89,7 @@ export default function Profile() {
     e.preventDefault()
     setSaving(true); setError('')
     try {
-      await upsertProfile(user.id, form)
+      await upsertProfile(user.id, { ...form, ...(avatarUrl ? { avatar_url: avatarUrl } : {}) })
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     } catch (err) {
@@ -117,16 +142,45 @@ export default function Profile() {
 
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 rounded-2xl bg-[#1A6B72] flex items-center justify-center text-white font-bold text-2xl">
-            {initials}
+          {/* Avatar with upload */}
+          <div className="relative flex-shrink-0">
+            <div className="w-16 h-16 rounded-2xl overflow-hidden bg-[#1A6B72] flex items-center justify-center">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Profile photo" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-white font-bold text-2xl">{initials}</span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={avatarUploading}
+              className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#1A6B72] text-white flex items-center justify-center text-xs hover:bg-[#155960] transition border-2 border-white"
+              title="Upload photo">
+              {avatarUploading ? '…' : '📷'}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
           </div>
           <div>
             <h1 className="font-serif text-2xl font-bold text-[#0F0F0E]">
               {form.full_name || user.email.split('@')[0]}
             </h1>
             <div className="text-sm text-[#888780]">{user.email}</div>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={avatarUploading}
+              className="text-xs text-[#1A6B72] hover:underline mt-0.5 transition">
+              {avatarUploading ? 'Uploading…' : avatarUrl ? 'Change photo' : 'Upload photo'}
+            </button>
             {roleInfo && (
-              <span className={`inline-flex items-center gap-1 mt-1 text-xs font-bold px-2 py-0.5 rounded ${roleInfo.color}`}>
+              <span className={`flex items-center gap-1 mt-1 text-xs font-bold px-2 py-0.5 rounded w-fit ${roleInfo.color}`}>
                 {roleInfo.icon} {roleInfo.label}
               </span>
             )}
