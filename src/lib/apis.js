@@ -557,3 +557,72 @@ export async function fetchRegionalNews() {
   setCache(ckey, articles, 60 * 60 * 1000) // 1 hour
   return articles
 }
+
+// ─── Dallas Federal Reserve ───────────────────────────────────────────────────
+// Primary source: Dallas Fed series published on FRED (via our fred-proxy).
+// Bonus: also tries Dallas Fed direct APIs — silently falls back if CORS-blocked.
+//
+// FRED series used:
+//   TEXLEAD   — Texas Leading Index (monthly, Dallas Fed via FRED)
+//   DALTBSOI  — Texas Business Activity Index (monthly diffusion, Dallas Fed TBOS)
+//   TXRSALES  — Texas Total Retail Sales (monthly, Census/State)
+//   EXPMX     — U.S. Exports to Mexico (monthly, millions $, Census)
+export const DALLAS_FRED_SERIES = {
+  tli:     'TEXLEAD',
+  tbos:    'DALTBSOI',
+  retail:  'TXRSALES',
+  exports: 'EXPMX',
+}
+
+export async function fetchDallasFed() {
+  const ckey = 'rd_dallasfed_v1'
+  const cached = getCache(ckey)
+  if (cached) return cached
+
+  // Fetch all four FRED series through our proxy (reliable)
+  const fredResults = await Promise.allSettled(
+    Object.entries(DALLAS_FRED_SERIES).map(([k, id]) =>
+      fetchFRED(id, 14).then(d => ({ key: k, data: d }))
+    )
+  )
+
+  const mapped = { source: 'fred' }
+  fredResults.forEach(r => {
+    if (r.status === 'fulfilled') mapped[r.value.key] = r.value.data
+    else console.warn('[DallasFed] FRED series failed:', r.reason?.message)
+  })
+
+  if (!Object.keys(mapped).some(k => k !== 'source')) {
+    throw new Error('All Dallas Fed series failed')
+  }
+
+  // Bonus: try Dallas Fed direct TLI API (public, no auth).
+  // May be CORS-blocked in the browser — silently fall back to FRED data.
+  try {
+    const ac = new AbortController()
+    const t  = setTimeout(() => ac.abort(), 4000)
+    const res = await fetch('https://www.dallasfed.org/api/tli/latest', { signal: ac.signal })
+    clearTimeout(t)
+    if (res.ok) {
+      const json = await res.json()
+      const rows = (json?.data ?? json?.Results ?? []).filter(r => r.value != null)
+      if (rows.length >= 6) {
+        // Normalize to same shape as FRED observations (newest-first)
+        const sorted = [...rows].sort((a, b) =>
+          (b.date || b.period || '').localeCompare(a.date || a.period || '')
+        )
+        mapped.tli    = sorted.slice(0, 14).map(r => ({
+          date:  r.date || r.period || '',
+          value: parseFloat(r.value),
+        }))
+        mapped.source = 'dallas_fed'
+        console.log('[DallasFed] TLI from direct API:', mapped.tli.length, 'obs')
+      }
+    }
+  } catch (e) {
+    console.log('[DallasFed] direct API unavailable (expected if CORS-blocked):', e.message)
+  }
+
+  setCache(ckey, mapped, 4 * 60 * 60 * 1000) // 4 hours
+  return mapped
+}

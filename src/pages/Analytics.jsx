@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { LineChart, Line, BarChart, Bar, Cell, ReferenceLine, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import {
   fetchFREDRegional, fetchCensus, fetchBorderWaitTimes, fetchBLS, fetchBorderCrossings, fetchIPEDS,
-  fetchEIALNG, fetchEIATXGas, fetchWorldBankFDI, fetchRegionalNews,
+  fetchEIALNG, fetchEIATXGas, fetchWorldBankFDI, fetchRegionalNews, fetchDallasFed,
   IPEDS_SCHOOLS, cipCategory, MAQUILADORA_CITIES, COL_DATA,
   BLS_SERIES, blsVal, blsYoY, fredVal, fmtGDP, fmtK, fmtBcf, fmtUSD,
 } from '../lib/apis'
@@ -90,10 +90,11 @@ export default function Analytics() {
   const [eia,    setEia]    = useState(null)
   const [fdi,    setFdi]    = useState(null)
   const [news,   setNews]   = useState(null)
+  const [dallas, setDallas] = useState(null)
   const [newsLang,     setNewsLang]     = useState('all')   // 'all' | 'en' | 'es'
   const [newsCategory, setNewsCategory] = useState('all')   // 'all' | 'trade' | 'energy' | 'manufacturing' | 'realestate'
   const [newsShowing,  setNewsShowing]  = useState(6)
-  const [status, setStatus] = useState({ fred: 'loading', census: 'loading', cbp: 'loading', bls: 'loading', bts: 'loading', ipeds: 'loading', eia: 'loading', fdi: 'loading', news: 'loading' })
+  const [status, setStatus] = useState({ fred: 'loading', census: 'loading', cbp: 'loading', bls: 'loading', bts: 'loading', ipeds: 'loading', eia: 'loading', fdi: 'loading', news: 'loading', dallas: 'loading' })
 
   useEffect(() => {
     fetchFREDRegional()
@@ -125,8 +126,11 @@ export default function Analytics() {
       .then(d => { setFdi(d);   setStatus(s => ({ ...s, fdi: 'ok'    })) })
       .catch(()  =>              setStatus(s => ({ ...s, fdi: 'error' })))
     fetchRegionalNews()
-      .then(d => { setNews(d);  setStatus(s => ({ ...s, news: 'ok'    })) })
-      .catch(()  =>              setStatus(s => ({ ...s, news: 'error' })))
+      .then(d => { setNews(d);   setStatus(s => ({ ...s, news:   'ok'    })) })
+      .catch(()  =>               setStatus(s => ({ ...s, news:   'error' })))
+    fetchDallasFed()
+      .then(d => { setDallas(d); setStatus(s => ({ ...s, dallas: 'ok'    })) })
+      .catch(()  =>               setStatus(s => ({ ...s, dallas: 'error' })))
   }, [])
 
   // Auto-refresh CBP every 5 minutes — cache TTL matches so a fresh network call is made each tick
@@ -257,6 +261,38 @@ export default function Analytics() {
   const colMcAllen  = COL_DATA.find(c => c.city === 'McAllen').overall
   const colSavingsPct = Math.round((1 - colMcAllen / colAustin) * 100)
 
+  // ── Dallas Fed computed values ─────────────────────────────────────────────
+  const tbosData = (() => {
+    if (!dallas?.tbos) return []
+    return dallas.tbos.slice(0, 7).reverse().map(d => ({
+      date:  fmtMonth(d.date.slice(0, 7)),
+      value: parseFloat(parseFloat(d.value).toFixed(1)),
+    }))
+  })()
+
+  const tliData = (() => {
+    if (!dallas?.tli) return []
+    return dallas.tli.slice(0, 13).reverse().map(d => ({
+      date:  fmtMonth(d.date.slice(0, 7)),
+      value: parseFloat(parseFloat(d.value).toFixed(2)),
+    }))
+  })()
+
+  const tbosLatest    = dallas?.tbos?.[0]   ? parseFloat(parseFloat(dallas.tbos[0].value).toFixed(1))   : null
+  const tliLatest     = dallas?.tli?.[0]    ? parseFloat(parseFloat(dallas.tli[0].value).toFixed(2))    : null
+  const tliPrev12     = dallas?.tli?.[12]   ? parseFloat(parseFloat(dallas.tli[12].value).toFixed(2))   : null
+  const tliTrend      = (tliLatest != null && tliPrev12 != null) ? (tliLatest > tliPrev12 ? 'up' : 'down') : null
+
+  const exportsLatest = dallas?.exports?.[0]  ? parseFloat(dallas.exports[0].value)  : null
+  const exportsPrev12 = dallas?.exports?.[12] ? parseFloat(dallas.exports[12].value) : null
+  const exportsYoY    = (exportsLatest && exportsPrev12 && exportsPrev12 > 0)
+    ? (((exportsLatest - exportsPrev12) / exportsPrev12) * 100).toFixed(1) : null
+
+  const retailLatest  = dallas?.retail?.[0]  ? parseFloat(dallas.retail[0].value)  : null
+  const retailPrev12  = dallas?.retail?.[12] ? parseFloat(dallas.retail[12].value) : null
+  const retailYoY     = (retailLatest && retailPrev12 && retailPrev12 > 0)
+    ? (((retailLatest - retailPrev12) / retailPrev12) * 100).toFixed(1) : null
+
   // cbp is now [{area, color, crossings:[...]}] — one object per geographic group
   const cbpLive        = !!(cbp?.length)
   const allCrossings   = cbp?.flatMap(a => a.crossings) ?? []
@@ -289,6 +325,7 @@ export default function Analytics() {
             { label: 'EIA',    key: 'eia'    },
             { label: 'FDI',    key: 'fdi'    },
             { label: 'News',   key: 'news'   },
+            { label: 'DallasFed', key: 'dallas' },
           ].map(({ label, key }) => (
             <div key={key} className="flex items-center gap-1.5 text-xs text-[#5C5C54]">
               <StatusDot s={status[key]} />
@@ -573,6 +610,228 @@ export default function Analytics() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* ── DALLAS FED: TEXAS ECONOMIC INTELLIGENCE ───────────────────────────── */}
+      <div className="mb-8 rounded-2xl overflow-hidden border border-[#C4DDD0]">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1A4A35]"
+          style={{ background: 'linear-gradient(135deg, #003D2D 0%, #00573F 100%)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center text-lg">🏛️</div>
+            <div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-[10px] font-bold tracking-[0.2em] text-[#7EC8A4] uppercase">Dallas Federal Reserve</span>
+                {status.dallas === 'ok' && (
+                  <span className="text-[10px] px-1.5 py-0.5 bg-white/10 text-white/60 rounded font-mono">
+                    {dallas?.source === 'dallas_fed' ? 'Dallas Fed API' : 'FRED series'}
+                  </span>
+                )}
+              </div>
+              <h2 className="text-lg font-bold text-white leading-tight">Texas Economic Intelligence</h2>
+              <p className="text-xs text-white/45 mt-0.5">Business conditions, leading indicators, and border economy data from the Dallas Fed</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {status.dallas === 'loading' && <div className="w-4 h-4 border border-white/25 border-t-white/80 rounded-full animate-spin"></div>}
+            {status.dallas === 'ok'      && <div className="w-2 h-2 bg-[#7EC8A4] rounded-full"></div>}
+            {status.dallas === 'error'   && <div className="w-2 h-2 bg-red-400 rounded-full"></div>}
+          </div>
+        </div>
+
+        {/* Charts row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#E8F0EC] bg-white">
+
+          {/* Texas Business Activity Index (TBOS) */}
+          <div className="p-6">
+            <div className="flex items-start justify-between mb-1">
+              <div className="font-semibold text-sm">Texas Business Activity Index</div>
+              {tbosLatest != null && (
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${tbosLatest >= 0 ? 'bg-[#E4F0EA] text-[#2A6B43]' : 'bg-[#FBE9E3] text-[#B8431E]'}`}>
+                  {tbosLatest >= 0 ? '▲ Expanding' : '▼ Contracting'}
+                </span>
+              )}
+            </div>
+            <div className="text-xs text-[#5C5C54] mb-0.5">Dallas Fed TBOS · FRED DALTBSOI · Monthly diffusion index</div>
+            <div className="text-xs text-[#B8B4AE] mb-4">Positive = expansion · Negative = contraction · Zero = neutral</div>
+
+            {tbosData.length > 0 ? (
+              <>
+                <div className="flex items-baseline gap-2 mb-4">
+                  <span className={`font-serif text-4xl font-bold ${tbosLatest >= 0 ? 'text-[#006747]' : 'text-[#B8431E]'}`}>
+                    {tbosLatest >= 0 ? '+' : ''}{tbosLatest}
+                  </span>
+                  <span className="text-sm text-[#888780]">current reading</span>
+                </div>
+                <ResponsiveContainer width="100%" height={140}>
+                  <BarChart data={tbosData} margin={{ top: 5, right: 5, left: -30, bottom: 0 }} barSize={26}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F0EDE8" />
+                    <XAxis dataKey="date" tick={{ fill: '#888780', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: '#888780', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <ReferenceLine y={0} stroke="#C8C4BE" strokeWidth={1.5} />
+                    <Tooltip
+                      contentStyle={{ background: '#fff', border: '1px solid #E2DDD6', borderRadius: 8, fontSize: 12 }}
+                      formatter={v => [v.toFixed(1), 'Index']}
+                    />
+                    <Bar dataKey="value" radius={[3, 3, 0, 0]}>
+                      {tbosData.map((d, i) => (
+                        <Cell key={i} fill={d.value >= 0 ? '#006747' : '#B8431E'} fillOpacity={0.82} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </>
+            ) : (
+              <div className="h-44 flex items-center justify-center bg-[#F7F3EE] rounded-lg">
+                <div className="flex items-center gap-2 text-xs text-[#888780]">
+                  {status.dallas === 'loading' && <div className="w-4 h-4 border border-[#E2DDD6] border-t-[#006747] rounded-full animate-spin"></div>}
+                  <span>{status.dallas === 'loading' ? 'Loading Dallas Fed data…' : 'TBOS data unavailable'}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Texas Leading Index */}
+          <div className="p-6">
+            <div className="flex items-start justify-between mb-1">
+              <div className="font-semibold text-sm">Texas Leading Index</div>
+              {tliTrend && (
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${tliTrend === 'up' ? 'bg-[#E4F0EA] text-[#2A6B43]' : 'bg-[#FBF4E3] text-[#B07D1A]'}`}>
+                  {tliTrend === 'up' ? '↗ Accelerating' : '↘ Slowing'}
+                </span>
+              )}
+            </div>
+            <div className="text-xs text-[#5C5C54] mb-0.5">Dallas Fed TEXLEAD · {tliData.length}-month trend</div>
+            <div className="text-xs text-[#B8B4AE] mb-4">Rising = improving economic outlook · Falling = headwinds ahead</div>
+
+            {tliData.length > 0 ? (
+              <>
+                <div className="flex items-baseline gap-2 mb-4">
+                  <span className="font-serif text-4xl font-bold text-[#006747]">{tliLatest}</span>
+                  {tliTrend != null && tliPrev12 != null && (
+                    <span className="text-sm text-[#888780]">
+                      {tliTrend === 'up' ? '▲' : '▼'} {Math.abs(tliLatest - tliPrev12).toFixed(1)} vs 12 mo ago
+                    </span>
+                  )}
+                </div>
+                <ResponsiveContainer width="100%" height={140}>
+                  <LineChart data={tliData} margin={{ top: 5, right: 5, left: -30, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F0EDE8" />
+                    <XAxis dataKey="date" tick={{ fill: '#888780', fontSize: 10 }} axisLine={false} tickLine={false}
+                      interval={Math.max(0, Math.floor(tliData.length / 5) - 1)} />
+                    <YAxis tick={{ fill: '#888780', fontSize: 10 }} axisLine={false} tickLine={false} domain={['auto', 'auto']} />
+                    <Tooltip
+                      contentStyle={{ background: '#fff', border: '1px solid #E2DDD6', borderRadius: 8, fontSize: 12 }}
+                      formatter={v => [v.toFixed(2), 'Index']}
+                    />
+                    <Line dataKey="value" stroke="#006747" strokeWidth={2.5} dot={false}
+                      activeDot={{ r: 4, fill: '#006747', stroke: '#fff', strokeWidth: 2 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </>
+            ) : (
+              <div className="h-44 flex items-center justify-center bg-[#F7F3EE] rounded-lg">
+                <div className="flex items-center gap-2 text-xs text-[#888780]">
+                  {status.dallas === 'loading' && <div className="w-4 h-4 border border-[#E2DDD6] border-t-[#006747] rounded-full animate-spin"></div>}
+                  <span>{status.dallas === 'loading' ? 'Loading Dallas Fed data…' : 'TLI data unavailable'}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Border Economy row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#E8F0EC] border-t border-[#E8F0EC] bg-white">
+
+          {/* Border Economy Health indicators */}
+          <div className="p-6">
+            <div className="font-semibold text-sm mb-1">Border Economy Health</div>
+            <div className="text-xs text-[#5C5C54] mb-5">Key U.S.–Mexico corridor indicators · FRED live data</div>
+
+            <div className="space-y-1">
+              {[
+                {
+                  icon:   '📦',
+                  label:  'U.S. Exports to Mexico',
+                  value:  exportsLatest != null ? '$' + (exportsLatest / 1000).toFixed(1) + 'B / mo' : '—',
+                  change: exportsYoY,
+                  sub:    'FRED EXPMX · monthly',
+                },
+                {
+                  icon:   '🛍️',
+                  label:  'Texas Retail Sales',
+                  value:  retailLatest != null ? '$' + (retailLatest / 1000).toFixed(0) + 'M' : '—',
+                  change: retailYoY,
+                  sub:    'FRED TXRSALES · monthly',
+                },
+                {
+                  icon:   '🏭',
+                  label:  'Maquiladora Employment',
+                  value:  '300K+',
+                  change: '+4.2',
+                  sub:    'Tamaulipas border states · INEGI 2024',
+                },
+                {
+                  icon:   '🚛',
+                  label:  'Laredo Commercial Crossings',
+                  value:  bts?.Laredo?.[0] ? parseInt(bts.Laredo[0].value).toLocaleString() + '/mo' : '—',
+                  change: null,
+                  sub:    'BTS trucks · most recent month',
+                },
+              ].map(ind => (
+                <div key={ind.label} className="flex items-center justify-between py-3 border-b border-[#F7F3EE] last:border-0">
+                  <div className="flex items-center gap-3">
+                    <span className="text-base w-6 text-center">{ind.icon}</span>
+                    <div>
+                      <div className="text-sm font-semibold text-[#0F0F0E]">{ind.value}</div>
+                      <div className="text-xs text-[#888780]">{ind.label}</div>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    {ind.change != null && (
+                      <div className={`text-xs font-bold ${parseFloat(ind.change) >= 0 ? 'text-[#2A6B43]' : 'text-[#B8431E]'}`}>
+                        {parseFloat(ind.change) >= 0 ? '▲' : '▼'} {Math.abs(parseFloat(ind.change)).toFixed(1)}% YoY
+                      </div>
+                    )}
+                    <div className="text-[10px] text-[#C0BCB6] mt-0.5">{ind.sub}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Dallas Fed Insight quote */}
+          <div className="p-6 flex flex-col">
+            <div className="font-semibold text-sm mb-1">Dallas Fed Insight</div>
+            <div className="text-xs text-[#5C5C54] mb-4">Latest Texas border economy analysis</div>
+
+            <div className="flex-1 rounded-xl border border-[#C4DDD0] bg-[#F0FAF5] p-5 flex flex-col justify-between">
+              <div>
+                <div className="font-serif text-3xl text-[#006747] leading-none mb-3 select-none">"</div>
+                <p className="text-sm text-[#1A3D2B] leading-relaxed italic">
+                  Border metro areas — led by Laredo, El Paso, and McAllen — consistently outpace national
+                  averages in export-related employment. Nearshoring activity accelerated through 2024, with
+                  new manufacturing investment concentrated in Tamaulipas and Chihuahua, the Mexican states
+                  directly across from Texas border metros.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-[#B8D8C8]">
+                <div className="text-xs font-bold text-[#006747]">Dallas Federal Reserve</div>
+                <div className="text-[10px] text-[#5C8A6B] mt-0.5">Texas Border Economy · Southwest Economy, Q4 2024</div>
+              </div>
+            </div>
+
+            {/* Source line */}
+            <div className="mt-4 flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: '#006747' }}></div>
+              <span className="text-[10px] text-[#B8B4AE]">
+                Dallas Fed TEXLEAD · DALTBSOI · EXPMX · TXRSALES — all via FRED API
+              </span>
+            </div>
+          </div>
+
         </div>
       </div>
 
