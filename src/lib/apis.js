@@ -27,7 +27,7 @@ function setCache(key, data, ttl) {
 // GDP series: Real Gross Metropolitan Product (millions chained 2017$, annual)
 // UR series:  BLS LAU unemployment rates via FRED (monthly)
 export const FRED_SERIES = {
-  mcallen_gdp:     'RGMP10530',
+  mcallen_gdp:     'RGMP32580',
   laredo_gdp:      'RGMP29700',
   brownsville_gdp: 'RGMP15180',
   mcallen_ur:      'LAUMT482258000000003',
@@ -75,7 +75,7 @@ export async function fetchFRED(seriesId, limit = 8) {
 }
 
 export async function fetchFREDRegional() {
-  const ckey = 'rd_fred_regional_v2'
+  const ckey = 'rd_fred_regional_v3' // bumped: RGMP10530 → RGMP32580
   const cached = getCache(ckey)
   if (cached) {
     console.log('[FRED] regional cache hit, keys:', Object.keys(cached))
