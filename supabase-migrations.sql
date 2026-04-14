@@ -286,10 +286,111 @@ CREATE TRIGGER profiles_set_updated_at
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- 12. COMPANIES TABLE
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS companies (
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  legal_name   TEXT        NOT NULL,
+  sector       TEXT,
+  city         TEXT,
+  state        TEXT,
+  country      TEXT        DEFAULT 'US',
+  description  TEXT,
+  website      TEXT,
+  phone        TEXT,
+  email        TEXT,
+  address      TEXT,
+  latitude     NUMERIC,
+  longitude    NUMERIC,
+  status       TEXT        DEFAULT 'active',
+  employees    TEXT,
+  founded_year INT,
+  ready_to_work BOOLEAN    DEFAULT FALSE,
+  cert_sam     BOOLEAN     DEFAULT FALSE,
+  cert_hubzone BOOLEAN     DEFAULT FALSE,
+  cert_immex   BOOLEAN     DEFAULT FALSE,
+  services     TEXT,
+  owner_id     UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "companies_public_read"  ON companies;
+DROP POLICY IF EXISTS "companies_owner_insert" ON companies;
+DROP POLICY IF EXISTS "companies_owner_update" ON companies;
+
+CREATE POLICY "companies_public_read"
+  ON companies FOR SELECT
+  USING (true);
+
+CREATE POLICY "companies_owner_insert"
+  ON companies FOR INSERT
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "companies_owner_update"
+  ON companies FOR UPDATE
+  USING (auth.uid() = owner_id);
+
+CREATE INDEX IF NOT EXISTS idx_companies_sector  ON companies(sector);
+CREATE INDEX IF NOT EXISTS idx_companies_city    ON companies(city);
+CREATE INDEX IF NOT EXISTS idx_companies_country ON companies(country);
+CREATE INDEX IF NOT EXISTS idx_companies_status  ON companies(status);
+CREATE INDEX IF NOT EXISTS idx_companies_owner   ON companies(owner_id);
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 13. PROJECTS TABLE
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS projects (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  title       TEXT        NOT NULL,
+  description TEXT,
+  sector      TEXT,
+  city        TEXT,
+  state       TEXT,
+  budget      TEXT,
+  value_usd   NUMERIC,
+  status      TEXT        DEFAULT 'active',
+  location    TEXT,
+  tags        TEXT[]      DEFAULT '{}',
+  company_id  UUID        REFERENCES companies(id) ON DELETE SET NULL,
+  owner_id    UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "projects_public_read"  ON projects;
+DROP POLICY IF EXISTS "projects_owner_insert" ON projects;
+DROP POLICY IF EXISTS "projects_owner_update" ON projects;
+
+CREATE POLICY "projects_public_read"
+  ON projects FOR SELECT
+  USING (true);
+
+CREATE POLICY "projects_owner_insert"
+  ON projects FOR INSERT
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "projects_owner_update"
+  ON projects FOR UPDATE
+  USING (auth.uid() = owner_id);
+
+CREATE INDEX IF NOT EXISTS idx_projects_sector ON projects(sector);
+CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
+CREATE INDEX IF NOT EXISTS idx_projects_owner  ON projects(owner_id);
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- DONE — verify with:
 --   SELECT COUNT(*) FROM profiles;
 --   SELECT COUNT(*) FROM saved_companies;
 --   SELECT COUNT(*) FROM watchlist;
 --   SELECT COUNT(*) FROM user_activity;
+--   SELECT COUNT(*) FROM companies;
+--   SELECT COUNT(*) FROM projects;
 --   SELECT * FROM storage.buckets WHERE id = 'avatars';
 -- ─────────────────────────────────────────────────────────────────────────────

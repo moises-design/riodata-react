@@ -41,35 +41,27 @@ export const FRED_SERIES = {
 export async function fetchFRED(seriesId, limit = 8) {
   const ckey = `rd_fred_${seriesId}`
   const cached = getCache(ckey)
-  if (cached) {
-    console.log(`[FRED] cache hit: ${seriesId} (${cached.length} obs)`)
-    return cached
-  }
+  if (cached) return cached
 
   const url = new URL(FRED_PROXY)
   url.searchParams.set('series_id', seriesId)
   url.searchParams.set('limit', String(limit))
   url.searchParams.set('sort_order', 'desc')
 
-  console.log(`[FRED] fetching: ${seriesId}`)
   // fred-proxy is deployed with --no-verify-jwt (public proxy).
   // The FRED API key stays server-side as a Supabase secret.
-  const res = await fetch(url.toString())
+  const res  = await fetch(url.toString())
   const json = await res.json()
-  console.log(`[FRED] response for ${seriesId} (HTTP ${res.status}):`, json)
 
   if (!json.observations) {
-    console.error(`[FRED] no observations for ${seriesId}:`, json)
     throw new Error(`FRED proxy: ${seriesId} — ${json.error_message ?? json.error ?? 'no observations field'}`)
   }
 
   const data = json.observations
     .filter(o => o.value !== '.')
     .map(o => ({ date: o.date, value: parseFloat(o.value) }))
-  console.log(`[FRED] parsed ${seriesId}: ${data.length} valid observations, latest: ${data[0]?.date} = ${data[0]?.value}`)
 
   if (!data.length) {
-    console.warn(`[FRED] ${seriesId} returned 0 non-missing observations — series may not exist or have no data`)
     throw new Error(`FRED proxy: ${seriesId} — 0 valid observations`)
   }
 
@@ -80,10 +72,7 @@ export async function fetchFRED(seriesId, limit = 8) {
 export async function fetchFREDRegional() {
   const ckey = 'rd_fred_regional_v4' // bumped: LAU series → URN series
   const cached = getCache(ckey)
-  if (cached) {
-    console.log('[FRED] regional cache hit, keys:', Object.keys(cached))
-    return cached
-  }
+  if (cached) return cached
 
   const results = await Promise.allSettled(
     Object.entries(FRED_SERIES).map(([k, id]) => fetchFRED(id, 8).then(d => [k, d]))
@@ -94,12 +83,8 @@ export async function fetchFREDRegional() {
     if (r.status === 'fulfilled') {
       const [k, d] = r.value
       mapped[k] = d
-    } else {
-      console.error('[FRED] series failed:', r.reason?.message)
     }
   })
-
-  console.log('[FRED] fetchFREDRegional result — succeeded:', Object.keys(mapped), '| failed:', results.filter(r => r.status === 'rejected').length)
 
   if (!Object.keys(mapped).length) throw new Error('All FRED series failed')
   setCache(ckey, mapped, 4 * 60 * 60 * 1000)
@@ -182,18 +167,11 @@ export const CBP_PORT_GROUPS = [
 export async function fetchBorderWaitTimes() {
   const ckey   = 'rd_cbp_expanded_v2'
   const cached = getCache(ckey)
-  if (cached) {
-    console.log('[CBP] cache hit, crossings:', cached.flatMap(g => g.crossings).length)
-    return cached
-  }
+  if (cached) return cached
 
-  console.log('[CBP] fetching from proxy:', CBP_PROXY)
   const res = await fetch(CBP_PROXY)
-  console.log('[CBP] proxy response status:', res.status, res.ok)
   if (!res.ok) throw new Error(`CBP ${res.status}`)
   const all = await res.json()
-  console.log('[CBP] raw records:', Array.isArray(all) ? all.length : typeof all,
-    '— sample port_numbers:', Array.isArray(all) ? all.slice(0,3).map(p => p.port_number) : all)
   if (!Array.isArray(all)) throw new Error('CBP: unexpected response shape')
 
   // Build O(1) lookup by port_number string
@@ -315,8 +293,7 @@ export async function fetchEIALNG() {
     const data = [...observations].reverse().map(o => ({ period: o.date, value: o.value }))
     setCache(ckey, data, 24 * 60 * 60 * 1000)
     return data
-  } catch (e) {
-    console.warn('[EIA LNG] FRED series failed, using hardcoded EIA data:', e.message)
+  } catch {
     return LNG_FALLBACK
   }
 }
@@ -343,8 +320,7 @@ export async function fetchEIATXGas() {
     const data = observations.map(o => ({ period: o.date, value: o.value }))
     setCache(ckey, data, 24 * 60 * 60 * 1000)
     return data
-  } catch (e) {
-    console.warn('[EIA TXGas] FRED series failed, using hardcoded EIA data:', e.message)
+  } catch {
     return [...TXGAS_FALLBACK].reverse() // newest-first
   }
 }
@@ -480,7 +456,6 @@ export async function fetchIPEDS() {
   const mapped = {}
   results.forEach(r => {
     if (r.status === 'fulfilled') mapped[r.value.unitid] = r.value
-    else console.error('[IPEDS] failed:', r.reason?.message)
   })
 
   if (!Object.keys(mapped).length) throw new Error('All IPEDS requests failed')
@@ -652,8 +627,6 @@ export async function fetchSpaceXLaunches() {
   // API returns oldest-first; slice(-10) gives the 10 most recent Starbase launches
   const past = allPast.filter(l => l.launchpad === STARBASE_LAUNCHPAD).slice(-10)
 
-  console.log(`[SpaceX] Starbase upcoming: ${upcoming.length}, past: ${past.length}`)
-
   const data = { upcoming, past }
   setCache(ckey, data, 60 * 60 * 1000) // 1 hour
   return data
@@ -752,16 +725,13 @@ export async function fetchDallasFed() {
   const cached = getCache(ckey)
   if (cached) return cached
 
-  console.log('[DallasFed] fetching FRED series:', DALLAS_FRED_SERIES)
-  console.log('[DallasFed] using fred-proxy:', FRED_PROXY)
-
-  // Fetch each series individually so a partial failure doesn't lose everything
+  // Fetch each series individually so a partial failure doesn't lose everything.
+  // dallasfed.org direct API is CORS-blocked from the browser — FRED proxy only.
   const mapped = { source: 'fred' }
   for (const [k, id] of Object.entries(DALLAS_FRED_SERIES)) {
     try {
       mapped[k] = await fetchFRED(id, 14)
-    } catch (e) {
-      console.warn(`[DallasFed] FRED ${id} failed (${e.message}) — using hardcoded fallback`)
+    } catch {
       if (DALLAS_HARDCODED[k]) {
         mapped[k] = DALLAS_HARDCODED[k]
         mapped.source = 'mixed'
@@ -771,33 +741,6 @@ export async function fetchDallasFed() {
 
   if (!Object.keys(mapped).some(k => k !== 'source')) {
     throw new Error('All Dallas Fed series failed')
-  }
-
-  // Bonus: try Dallas Fed direct TLI API (public, no auth).
-  // May be CORS-blocked in the browser — silently fall back to FRED data.
-  try {
-    const ac = new AbortController()
-    const t  = setTimeout(() => ac.abort(), 4000)
-    const res = await fetch('https://www.dallasfed.org/api/tli/latest', { signal: ac.signal })
-    clearTimeout(t)
-    if (res.ok) {
-      const json = await res.json()
-      const rows = (json?.data ?? json?.Results ?? []).filter(r => r.value != null)
-      if (rows.length >= 6) {
-        // Normalize to same shape as FRED observations (newest-first)
-        const sorted = [...rows].sort((a, b) =>
-          (b.date || b.period || '').localeCompare(a.date || a.period || '')
-        )
-        mapped.tli    = sorted.slice(0, 14).map(r => ({
-          date:  r.date || r.period || '',
-          value: parseFloat(r.value),
-        }))
-        mapped.source = 'dallas_fed'
-        console.log('[DallasFed] TLI from direct API:', mapped.tli.length, 'obs')
-      }
-    }
-  } catch (e) {
-    console.log('[DallasFed] direct API unavailable (expected if CORS-blocked):', e.message)
   }
 
   setCache(ckey, mapped, 4 * 60 * 60 * 1000) // 4 hours

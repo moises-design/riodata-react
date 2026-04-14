@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { sb } from '../lib/supabase'
 import { fetchWatchIds, addWatch, removeWatch, logActivity } from '../lib/db'
+import AuthModal from '../components/AuthModal'
 
 const sectorColors = {
     'Energy':        'bg-[#F2E8E3] text-[#B8431E]',
@@ -21,11 +23,17 @@ const DEMO = [
 ]
 
 export default function Opportunities() {
-    const [opps,       setOpps]       = useState([])
-    const [loading,    setLoading]    = useState(true)
-    const [watchIds,   setWatchIds]   = useState(new Set())
-    const [userId,     setUserId]     = useState(null)
-    const [watchingId, setWatchingId] = useState(null)
+    const navigate = useNavigate()
+
+    const [opps,        setOpps]        = useState([])
+    const [loading,     setLoading]     = useState(true)
+    const [watchIds,    setWatchIds]    = useState(new Set())
+    const [userId,      setUserId]      = useState(null)
+    const [watchingId,  setWatchingId]  = useState(null)
+    const [interestOpp, setInterestOpp] = useState(null)   // opp being inquired about
+    const [showAuth,    setShowAuth]    = useState(false)   // auth modal for post a project
+    const [intForm,     setIntForm]     = useState({ name: '', email: '', company: '', message: '' })
+    const [intDone,     setIntDone]     = useState(false)
 
     useEffect(() => {
         async function load() {
@@ -42,6 +50,27 @@ export default function Opportunities() {
     }, [])
 
     const display = opps.length > 0 ? opps : DEMO
+
+    function handlePostProject() {
+        if (userId) navigate('/onboarding')
+        else setShowAuth(true)
+    }
+
+    function openInterest(opp) {
+        setInterestOpp(opp)
+        setIntForm({ name: '', email: '', company: '', message: '' })
+        setIntDone(false)
+    }
+
+    function submitInterest(e) {
+        e.preventDefault()
+        const subj = encodeURIComponent(`Interest: ${interestOpp.title}`)
+        const body = encodeURIComponent(
+            `Project: ${interestOpp.title}\nLocation: ${interestOpp.location || ''}\n\nName: ${intForm.name}\nEmail: ${intForm.email}\nCompany: ${intForm.company}\n\nMessage:\n${intForm.message}`
+        )
+        window.open(`mailto:hello@riodata.org?subject=${subj}&body=${body}`)
+        setIntDone(true)
+    }
 
     async function toggleWatch(e, opp) {
         e.stopPropagation()
@@ -72,7 +101,7 @@ export default function Opportunities() {
                         <h1 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight text-white mb-1">Active Projects</h1>
                         <p className="text-sm text-white/40">{display.length} open opportunities across the region</p>
                     </div>
-                    <button className="sm:flex-shrink-0 px-4 py-2 bg-[#1A6B72] text-white rounded-lg text-sm font-semibold self-start sm:self-auto">+ Post a Project</button>
+                    <button onClick={handlePostProject} className="sm:flex-shrink-0 px-4 py-2 bg-[#1A6B72] text-white rounded-lg text-sm font-semibold self-start sm:self-auto">+ Post a Project</button>
                 </div>
             </div>
 
@@ -120,7 +149,7 @@ export default function Opportunities() {
                                             <span key={t} className="text-xs px-2 py-0.5 bg-[#F7F3EE] border border-[#E2DDD6] rounded text-[#5C5C54]">{t}</span>
                                         ))}
                                     </div>
-                                    <button className="w-full py-2.5 bg-[#1A6B72] text-white rounded-lg text-sm font-semibold hover:bg-[#155960] transition-all">
+                                    <button onClick={() => openInterest(o)} className="w-full py-2.5 bg-[#1A6B72] text-white rounded-lg text-sm font-semibold hover:bg-[#155960] transition-all">
                                         Express Interest →
                                     </button>
                                 </div>
@@ -129,6 +158,81 @@ export default function Opportunities() {
                     </div>
                 )}
             </div>
+
+        {/* ── Express Interest Modal ── */}
+        {interestOpp && (
+            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
+                onMouseDown={e => { if (e.target === e.currentTarget) setInterestOpp(null) }}>
+                <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md border border-[#E2DDD6] overflow-hidden"
+                    style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+
+                    <div className="flex items-start justify-between px-6 pt-5 pb-4 border-b border-[#F0EDE8]">
+                        <div className="flex-1 min-w-0 pr-4">
+                            <div className="text-[10px] font-bold tracking-widest text-[#E87850]/80 uppercase mb-0.5">Express Interest</div>
+                            <div className="font-serif font-bold text-[#0F0F0E] text-sm leading-snug">{interestOpp.title}</div>
+                        </div>
+                        <button onClick={() => setInterestOpp(null)} className="text-[#888780] hover:text-[#0F0F0E] text-lg leading-none mt-0.5">✕</button>
+                    </div>
+
+                    <div className="px-6 py-5">
+                        {intDone ? (
+                            <div className="text-center py-4">
+                                <div className="text-4xl mb-3">✅</div>
+                                <div className="font-semibold text-[#0F0F0E] mb-1">Your mail client is ready</div>
+                                <p className="text-sm text-[#5C5C54] mb-5">Send the pre-filled email to complete your inquiry to hello@riodata.org.</p>
+                                <button onClick={() => setInterestOpp(null)}
+                                    className="px-6 py-2.5 bg-[#1A6B72] text-white rounded-lg text-sm font-semibold hover:bg-[#155960] transition">
+                                    Done
+                                </button>
+                            </div>
+                        ) : (
+                            <form onSubmit={submitInterest} className="flex flex-col gap-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-xs font-semibold text-[#5C5C54] mb-1 block">Your Name *</label>
+                                        <input required value={intForm.name}
+                                            onChange={e => setIntForm(p => ({ ...p, name: e.target.value }))}
+                                            className="w-full px-3 py-2 text-sm border border-[#E2DDD6] rounded-lg focus:outline-none focus:border-[#1A6B72] transition"
+                                            placeholder="Jane Smith" />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-semibold text-[#5C5C54] mb-1 block">Email *</label>
+                                        <input required type="email" value={intForm.email}
+                                            onChange={e => setIntForm(p => ({ ...p, email: e.target.value }))}
+                                            className="w-full px-3 py-2 text-sm border border-[#E2DDD6] rounded-lg focus:outline-none focus:border-[#1A6B72] transition"
+                                            placeholder="you@company.com" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold text-[#5C5C54] mb-1 block">Company / Organization</label>
+                                    <input value={intForm.company}
+                                        onChange={e => setIntForm(p => ({ ...p, company: e.target.value }))}
+                                        className="w-full px-3 py-2 text-sm border border-[#E2DDD6] rounded-lg focus:outline-none focus:border-[#1A6B72] transition"
+                                        placeholder="Your company name" />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold text-[#5C5C54] mb-1 block">Message *</label>
+                                    <textarea required rows={3} value={intForm.message}
+                                        onChange={e => setIntForm(p => ({ ...p, message: e.target.value }))}
+                                        className="w-full px-3 py-2 text-sm border border-[#E2DDD6] rounded-lg focus:outline-none focus:border-[#1A6B72] transition resize-none"
+                                        placeholder="Describe your interest and relevant qualifications..." />
+                                </div>
+                                <button type="submit"
+                                    className="w-full py-2.5 bg-[#1A6B72] text-white rounded-lg text-sm font-semibold hover:bg-[#155960] transition">
+                                    Send Inquiry →
+                                </button>
+                                <p className="text-[10px] text-[#B8B4AE] text-center -mt-1">
+                                    Opens your email client pre-filled for hello@riodata.org
+                                </p>
+                            </form>
+                        )}
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* ── Auth modal — for Post a Project when not logged in ── */}
+        {showAuth && <AuthModal initialTab="signin" onClose={() => setShowAuth(false)} />}
         </div>
     )
 }

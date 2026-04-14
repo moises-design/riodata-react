@@ -541,8 +541,6 @@ export default function Analytics() {
             Millions chained 2017$ · FRED RGMP series
             {totalGDP && ` · Combined ${fmtGDP(totalGDP)}`}
           </div>
-          {/* debug: log fred state every render so we can see what keys arrived */}
-          {fred && console.log('[Analytics] fred state keys:', Object.keys(fred), '| mcallen_gdp:', fred.mcallen_gdp?.length ?? 'undefined', 'obs | gdpTrend length:', gdpTrend.length)}
           {gdpTrend.length > 0 ? (
             <>
               <div className="h-36 flex items-end gap-2.5">
