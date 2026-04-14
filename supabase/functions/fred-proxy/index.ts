@@ -1,6 +1,9 @@
 // FRED API proxy — keeps the API key server-side.
-// Deploy:  npx supabase functions deploy fred-proxy
+// Deploy:  npx supabase functions deploy fred-proxy --no-verify-jwt
 // Secret:  npx supabase secrets set FRED_API_KEY=<your_key>
+//
+// --no-verify-jwt makes this a public endpoint; security comes from
+// FRED_API_KEY being a server-side secret, not from caller auth.
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",

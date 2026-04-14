@@ -45,12 +45,9 @@ export async function fetchFRED(seriesId, limit = 8) {
   url.searchParams.set('limit', String(limit))
   url.searchParams.set('sort_order', 'desc')
 
-  const res = await fetch(url.toString(), {
-    headers: {
-      'apikey':        SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-    },
-  })
+  // fred-proxy is deployed with --no-verify-jwt (public proxy).
+  // The FRED API key stays server-side as a Supabase secret.
+  const res = await fetch(url.toString())
   const json = await res.json()
   if (!json.observations) throw new Error(`FRED proxy: ${seriesId} — ${json.error ?? 'no observations'}`)
   const data = json.observations
