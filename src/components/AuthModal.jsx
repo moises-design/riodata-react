@@ -14,6 +14,10 @@ export default function AuthModal({ initialTab = 'signin', onClose }) {
   const [name,     setName]     = useState('')
   const [confirm,  setConfirm]  = useState('')
 
+  // password visibility
+  const [showPass,    setShowPass]    = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+
   const overlayRef = useRef(null)
 
   // Close on Escape
@@ -32,6 +36,7 @@ export default function AuthModal({ initialTab = 'signin', onClose }) {
   function switchTab(t) {
     setTab(t); setError(''); setSuccess(''); setForgotMode(false)
     setEmail(''); setPassword(''); setName(''); setConfirm('')
+    setShowPass(false); setShowConfirm(false)
   }
 
   async function handleSignIn(e) {
@@ -85,6 +90,19 @@ export default function AuthModal({ initialTab = 'signin', onClose }) {
 
   const inputCls = 'w-full px-3 py-2 text-sm border border-[#E2DDD6] rounded-lg focus:outline-none focus:border-[#1A6B72] focus:ring-1 focus:ring-[#1A6B72]/30 transition bg-white text-[#0F0F0E] placeholder:text-[#B8B4AE]'
   const btnPrimary = 'w-full py-2.5 rounded-lg bg-[#1A6B72] hover:bg-[#155960] text-white text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed'
+
+  const EyeIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  )
+  const EyeOffIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </svg>
+  )
 
   return (
     <div
@@ -180,8 +198,14 @@ export default function AuthModal({ initialTab = 'signin', onClose }) {
             <form onSubmit={handleSignIn} className="flex flex-col gap-3">
               <input type="email" required placeholder="Email address" value={email}
                 onChange={e => setEmail(e.target.value)} className={inputCls} />
-              <input type="password" required placeholder="Password" value={password}
-                onChange={e => setPassword(e.target.value)} className={inputCls} />
+              <div className="relative">
+                <input type={showPass ? 'text' : 'password'} required placeholder="Password" value={password}
+                  onChange={e => setPassword(e.target.value)} className={inputCls + ' pr-10'} />
+                <button type="button" tabIndex={-1} onClick={() => setShowPass(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888780] hover:text-[#0F0F0E] transition">
+                  {showPass ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              </div>
               <button type="submit" disabled={loading} className={btnPrimary}>
                 {loading ? 'Signing in…' : 'Sign In'}
               </button>
@@ -199,10 +223,22 @@ export default function AuthModal({ initialTab = 'signin', onClose }) {
                 onChange={e => setName(e.target.value)} className={inputCls} />
               <input type="email" required placeholder="Email address" value={email}
                 onChange={e => setEmail(e.target.value)} className={inputCls} />
-              <input type="password" required placeholder="Password (min 6 characters)" value={password}
-                onChange={e => setPassword(e.target.value)} className={inputCls} />
-              <input type="password" required placeholder="Confirm password" value={confirm}
-                onChange={e => setConfirm(e.target.value)} className={inputCls} />
+              <div className="relative">
+                <input type={showPass ? 'text' : 'password'} required placeholder="Password (min 6 characters)" value={password}
+                  onChange={e => setPassword(e.target.value)} className={inputCls + ' pr-10'} />
+                <button type="button" tabIndex={-1} onClick={() => setShowPass(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888780] hover:text-[#0F0F0E] transition">
+                  {showPass ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              </div>
+              <div className="relative">
+                <input type={showConfirm ? 'text' : 'password'} required placeholder="Confirm password" value={confirm}
+                  onChange={e => setConfirm(e.target.value)} className={inputCls + ' pr-10'} />
+                <button type="button" tabIndex={-1} onClick={() => setShowConfirm(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888780] hover:text-[#0F0F0E] transition">
+                  {showConfirm ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              </div>
               <button type="submit" disabled={loading} className={btnPrimary}>
                 {loading ? 'Creating account…' : 'Create Account'}
               </button>
