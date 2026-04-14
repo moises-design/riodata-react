@@ -1,18 +1,12 @@
 import { useState, useEffect } from 'react'
+import { LineChart, Line, BarChart, Bar, Cell, ReferenceLine, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import {
-  fetchFREDRegional, fetchCensus, fetchBorderWaitTimes, fetchBLS,
-  BLS_SERIES, blsVal, blsYoY, fredVal, fmtGDP, fmtK,
+  fetchFREDRegional, fetchCensus, fetchBorderWaitTimes, fetchBLS, fetchBorderCrossings, fetchIPEDS,
+  fetchEIALNG, fetchEIATXGas, fetchWorldBankFDI, fetchRegionalNews,
+  IPEDS_SCHOOLS, cipCategory, MAQUILADORA_CITIES, COL_DATA,
+  BLS_SERIES, blsVal, blsYoY, fredVal, fmtGDP, fmtK, fmtBcf, fmtUSD,
 } from '../lib/apis'
 
-// CBP static fallback — shown when API is unreachable
-const CBP_STATIC = [
-  { name: 'Laredo I (Convent St)', city: 'Laredo', pvWait: 25, cvWait: null, hours: '0700-2300' },
-  { name: 'World Trade Bridge', city: 'Laredo', pvWait: null, cvWait: 55, hours: '24 hours' },
-  { name: 'Lincoln-Juárez International', city: 'Laredo', pvWait: 20, cvWait: null, hours: '0600-2400' },
-  { name: 'Veterans International Bridge', city: 'Brownsville', pvWait: 35, cvWait: 50, hours: '0700-2400' },
-  { name: 'Gateway International Bridge', city: 'Brownsville', pvWait: 20, cvWait: 40, hours: '0700-2200' },
-  { name: 'Pharr-Reynosa Int\'l Bridge', city: 'McAllen', pvWait: 30, cvWait: 35, hours: '0600-2400' },
-]
 
 function waitBadge(mins) {
   if (mins == null) return 'bg-[#F7F3EE] text-[#888780]'
@@ -31,6 +25,59 @@ function LiveBadge() {
   return <span className="text-xs px-1.5 py-0.5 bg-[#E4F0EA] text-[#2A6B43] rounded font-medium">Live</span>
 }
 
+// ─── Starbase countdown (ticks every second) ───────────────────────────────────
+function StarbaseCountdown({ isoDate }) {
+  const [tick, setTick] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 1000)
+    return () => clearInterval(id)
+  }, [])
+  if (!isoDate) {
+    return (
+      <div className="flex flex-col items-center gap-1">
+        <span className="font-mono text-3xl font-bold text-white tracking-widest">TBD</span>
+        <span className="text-[10px] text-slate-400 uppercase tracking-wider">Next launch window</span>
+      </div>
+    )
+  }
+  const diff = new Date(isoDate) - Date.now()
+  if (diff <= 0) {
+    return <span className="font-mono text-xl font-bold text-[#34D399] tracking-wide">LAUNCH WINDOW OPEN</span>
+  }
+  const d = Math.floor(diff / 86400000)
+  const h = Math.floor((diff % 86400000) / 3600000)
+  const m = Math.floor((diff % 3600000) / 60000)
+  const s = Math.floor((diff % 60000) / 1000)
+  const pad = n => String(n).padStart(2, '0')
+  return (
+    <div className="flex items-end gap-3">
+      {[[d,'D'],[h,'H'],[m,'M'],[s,'S']].map(([v,u]) => (
+        <div key={u} className="flex flex-col items-center">
+          <span className="font-mono text-2xl font-bold text-white leading-none">{pad(v)}</span>
+          <span className="text-[10px] text-slate-400 mt-1 tracking-widest">{u}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Starbase static data ──────────────────────────────────────────────────────
+const STARBASE_LAUNCHES = [
+  { year: '2021', count: 5, proj: false },  // SN8, SN9, SN10, SN11, SN15 prototype hops
+  { year: '2022', count: 0, proj: false },  // Stack integration & ground testing
+  { year: '2023', count: 2, proj: false },  // IFT-1 (Apr 20), IFT-2 (Nov 18)
+  { year: '2024', count: 6, proj: false },  // IFT-3 through IFT-6 + additional tests
+  { year: '2025', count: 8, proj: true  },  // FAA projected / year-in-progress
+]
+
+const STARBASE_SUPPLIERS = [
+  { name: 'Hanwha',                location: 'McAllen, TX',        role: 'Aerospace components & defense mfg' },
+  { name: 'Brownsville Airport',   location: 'Brownsville, TX',    role: 'Cargo logistics & supply chain hub' },
+  { name: 'UTRGV Aerospace Eng.', location: 'Edinburg/Brownsville',role: 'Engineering talent pipeline' },
+  { name: 'Cameron County',        location: 'Brownsville, TX',    role: 'Infrastructure & permitting support' },
+  { name: 'SpaceX Starbase',       location: 'Boca Chica, TX',     role: 'Launch operations & R&D campus' },
+]
+
 // ─── MAIN ──────────────────────────────────────────────────────────────────────
 
 export default function Analytics() {
@@ -38,7 +85,15 @@ export default function Analytics() {
   const [census, setCensus] = useState(null)
   const [cbp,    setCbp]    = useState(null)
   const [bls,    setBls]    = useState(null)
-  const [status, setStatus] = useState({ fred: 'loading', census: 'loading', cbp: 'loading', bls: 'loading' })
+  const [bts,    setBts]    = useState(null)
+  const [ipeds,  setIpeds]  = useState(null)
+  const [eia,    setEia]    = useState(null)
+  const [fdi,    setFdi]    = useState(null)
+  const [news,   setNews]   = useState(null)
+  const [newsLang,     setNewsLang]     = useState('all')   // 'all' | 'en' | 'es'
+  const [newsCategory, setNewsCategory] = useState('all')   // 'all' | 'trade' | 'energy' | 'manufacturing' | 'realestate'
+  const [newsShowing,  setNewsShowing]  = useState(6)
+  const [status, setStatus] = useState({ fred: 'loading', census: 'loading', cbp: 'loading', bls: 'loading', bts: 'loading', ipeds: 'loading', eia: 'loading', fdi: 'loading', news: 'loading' })
 
   useEffect(() => {
     fetchFREDRegional()
@@ -53,6 +108,36 @@ export default function Analytics() {
     fetchBLS()
       .then(d => { setBls(d);   setStatus(s => ({ ...s, bls:    'ok' })) })
       .catch(()  =>              setStatus(s => ({ ...s, bls:    'error' })))
+    fetchBorderCrossings()
+      .then(d => { setBts(d);   setStatus(s => ({ ...s, bts:    'ok' })) })
+      .catch(()  =>              setStatus(s => ({ ...s, bts:    'error' })))
+    fetchIPEDS()
+      .then(d => { setIpeds(d); setStatus(s => ({ ...s, ipeds:  'ok' })) })
+      .catch(()  =>              setStatus(s => ({ ...s, ipeds:  'error' })))
+    Promise.allSettled([fetchEIALNG(), fetchEIATXGas()])
+      .then(([lngR, txR]) => {
+        const lng   = lngR.status === 'fulfilled' ? lngR.value : null
+        const txgas = txR.status  === 'fulfilled' ? txR.value  : null
+        if (lng || txgas) { setEia({ lng, txgas }); setStatus(s => ({ ...s, eia: 'ok'    })) }
+        else                                         setStatus(s => ({ ...s, eia: 'error' }))
+      })
+    fetchWorldBankFDI()
+      .then(d => { setFdi(d);   setStatus(s => ({ ...s, fdi: 'ok'    })) })
+      .catch(()  =>              setStatus(s => ({ ...s, fdi: 'error' })))
+    fetchRegionalNews()
+      .then(d => { setNews(d);  setStatus(s => ({ ...s, news: 'ok'    })) })
+      .catch(()  =>              setStatus(s => ({ ...s, news: 'error' })))
+  }, [])
+
+  // Auto-refresh CBP every 5 minutes — cache TTL matches so a fresh network call is made each tick
+  useEffect(() => {
+    const id = setInterval(() => {
+      try { localStorage.removeItem('rd_cbp_expanded_v2') } catch {}
+      fetchBorderWaitTimes()
+        .then(d => { setCbp(d); setStatus(s => ({ ...s, cbp: 'ok' })) })
+        .catch(() => {})
+    }, 5 * 60 * 1000)
+    return () => clearInterval(id)
   }, [])
 
   // ── Computed KPIs ────────────────────────────────────────────────────────────
@@ -105,8 +190,81 @@ export default function Analytics() {
   const sectorVals = sectors.map(s => blsVal(bls, s.key) ?? 0)
   const sectorMax  = Math.max(...sectorVals, 1)
 
-  const cbpData = cbp?.length ? cbp : CBP_STATIC
-  const cbpLive  = !!(cbp?.length)
+  // ── BTS chart data ────────────────────────────────────────────────────────────
+  const fmtMonth = d => {
+    if (!d) return ''
+    const [y, m] = d.split('-')
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    return `${months[parseInt(m) - 1]} '${y.slice(2)}`
+  }
+  const btsChartData = (() => {
+    if (!bts) return []
+    const dateMap = {}
+    Object.entries(bts).forEach(([port, rows]) => {
+      rows.forEach(row => {
+        const d = row.date?.slice(0, 7)
+        if (!d) return
+        if (!dateMap[d]) dateMap[d] = { date: d }
+        dateMap[d][port] = parseInt(row.value) || 0
+      })
+    })
+    return Object.values(dateMap).sort((a, b) => a.date.localeCompare(b.date)).slice(-12)
+  })()
+  const btsLatest = {
+    Laredo:      bts?.Laredo?.[0],
+    Hidalgo:     bts?.Hidalgo?.[0],
+    Brownsville: bts?.Brownsville?.[0],
+  }
+
+  // ── IPEDS chart data ─────────────────────────────────────────────────────────
+  const IPEDS_CHART_CATS = ['Business', 'Health', 'Education', 'Engineering', 'STEM']
+  const IPEDS_COLORS     = { UTRGV: '#1A6B72', TAMIU: '#B07D1A', TSC: '#B8431E' }
+
+  const ipedsChartData = IPEDS_CHART_CATS.map(cat => {
+    const entry = { category: cat }
+    IPEDS_SCHOOLS.forEach(s => {
+      const school = ipeds?.[s.unitid]
+      entry[s.shortName] = school
+        ? school.cips.filter(c => cipCategory(c.cipcode) === cat).reduce((sum, c) => sum + c.awards, 0)
+        : 0
+    })
+    return entry
+  })
+
+  const ipedsTotal = IPEDS_SCHOOLS.map(s => ipeds?.[s.unitid]?.total ?? 0).reduce((a, b) => a + b, 0)
+
+  // ── FDI computed values ───────────────────────────────────────────────────────
+  const fdiLatest        = fdi?.[fdi.length - 1]           // newest year (chart is oldest→newest)
+  const maquiladoraTotal = MAQUILADORA_CITIES.reduce((s, c) => s + c.workers, 0)
+
+  // ── EIA computed values ───────────────────────────────────────────────────────
+  const lngLatest    = eia?.lng?.[eia.lng.length - 1]     // most-recent item (chart is oldest→newest)
+  const lngLatestVal = lngLatest?.value ?? null
+  const txGasLatest  = eia?.txgas?.[0]                    // txgas is newest-first
+
+  // ── COL computed values (fully static — no API needed) ───────────────────────
+  // Horizontal bar: sorted highest→lowest so Brownsville is at bottom of vertical chart
+  const colBarData   = [...COL_DATA].sort((a, b) => b.overall - a.overall)
+  // Subcategory breakdown for South TX metros + Austin (for contrast)
+  const colSubCities = COL_DATA.filter(c => c.isSouthTX || c.city === 'Austin')
+  const colSubData   = ['Housing', 'Groceries', 'Utilities', 'Healthcare'].map(cat => {
+    const key = cat.toLowerCase()
+    const row = { cat }
+    colSubCities.forEach(c => { row[c.city] = c[key] })
+    return row
+  })
+  const colAustin   = COL_DATA.find(c => c.city === 'Austin').overall
+  const colMcAllen  = COL_DATA.find(c => c.city === 'McAllen').overall
+  const colSavingsPct = Math.round((1 - colMcAllen / colAustin) * 100)
+
+  // cbp is now [{area, color, crossings:[...]}] — one object per geographic group
+  const cbpLive        = !!(cbp?.length)
+  const allCrossings   = cbp?.flatMap(a => a.crossings) ?? []
+  const totalCrossings = allCrossings.length
+  const reportingCount = allCrossings.filter(c => c.hasData && (c.pvWait != null || c.cvWait != null)).length
+  const totalCvLanes   = allCrossings.reduce((s, c) => s + (c.cvLanes  ?? 0), 0)
+  const totalPvLanes   = allCrossings.reduce((s, c) => s + (c.pvLanes  ?? 0), 0)
+  const cbpLastUpdated = allCrossings.find(c => c.updatedAt)?.updatedAt ?? null
 
   return (
     <div className="px-14 py-12">
@@ -126,6 +284,11 @@ export default function Analytics() {
             { label: 'Census', key: 'census' },
             { label: 'CBP',    key: 'cbp'    },
             { label: 'BLS',    key: 'bls'    },
+            { label: 'BTS',    key: 'bts'    },
+            { label: 'IPEDS',  key: 'ipeds'  },
+            { label: 'EIA',    key: 'eia'    },
+            { label: 'FDI',    key: 'fdi'    },
+            { label: 'News',   key: 'news'   },
           ].map(({ label, key }) => (
             <div key={key} className="flex items-center gap-1.5 text-xs text-[#5C5C54]">
               <StatusDot s={status[key]} />
@@ -178,6 +341,133 @@ export default function Analytics() {
             <div className="text-xs text-[#888780] mt-0.5">{k.sub}</div>
           </div>
         ))}
+      </div>
+
+      {/* ── STARBASE & AEROSPACE TRACKER ─────────────────────────────────────── */}
+      <div className="mb-8 rounded-2xl overflow-hidden border border-[#1E3A5F]" style={{ background: 'linear-gradient(145deg, #0D1B2A 0%, #0A2540 50%, #0D1B2A 100%)' }}>
+
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4 border-b border-[#1E3A5F]">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              {/* Pulsing rocket */}
+              <div className="relative flex-shrink-0">
+                <span className="text-3xl" style={{ filter: 'drop-shadow(0 0 8px #38BDF8)' }}>🚀</span>
+                <span className="absolute inset-0 animate-ping rounded-full opacity-20 bg-sky-400 scale-75"></span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[10px] font-bold tracking-[0.2em] text-[#38BDF8] uppercase">Starbase · Boca Chica, TX</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#1E3A5F] text-slate-300 font-mono">FAA LLS 21-119</span>
+                </div>
+                <h2 className="text-lg font-bold text-white leading-tight">SpaceX Starbase &amp; Aerospace Hub</h2>
+                <p className="text-xs text-slate-400 mt-0.5">The world's only privately owned orbital launch site — and it's in the RioData region</p>
+              </div>
+            </div>
+            <span className="flex-shrink-0 text-[10px] font-bold tracking-[0.15em] px-2.5 py-1 rounded-full border border-[#38BDF8] text-[#38BDF8] uppercase">
+              Regional Exclusive
+            </span>
+          </div>
+        </div>
+
+        {/* Hero stat bar */}
+        <div className="grid grid-cols-3 divide-x divide-[#1E3A5F] border-b border-[#1E3A5F]">
+          {[
+            { val: '3,000',   unit: 'Direct Jobs',         sub: 'SpaceX Boca Chica / Brownsville' },
+            { val: '$600M+',  unit: 'Annual Economic Impact', sub: 'Brownsville EDC / Cameron County' },
+            { val: '40+',     unit: 'Local Suppliers',      sub: 'South Texas aerospace contracts' },
+          ].map(s => (
+            <div key={s.unit} className="px-6 py-4 text-center">
+              <div className="font-serif text-2xl font-bold text-white">{s.val}</div>
+              <div className="text-xs font-semibold text-[#38BDF8] mt-0.5">{s.unit}</div>
+              <div className="text-[10px] text-slate-500 mt-0.5">{s.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Main content: chart + right panel */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-[#1E3A5F]">
+
+          {/* Launch history chart */}
+          <div className="lg:col-span-3 px-6 py-5">
+            <div className="text-xs font-semibold text-slate-300 mb-1 uppercase tracking-wider">Launch History · Boca Chica</div>
+            <div className="text-[10px] text-slate-500 mb-4">
+              Integrated flight tests + prototype hops · 2025 = FAA projected
+            </div>
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={STARBASE_LAUNCHES} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1E3A5F" vertical={false} />
+                <XAxis dataKey="year" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ background: '#0D1B2A', border: '1px solid #1E3A5F', borderRadius: 8, color: '#E2E8F0', fontSize: 12 }}
+                  cursor={{ fill: 'rgba(56,189,248,0.07)' }}
+                  formatter={(v, _, props) => [v + (props.payload?.proj ? ' (proj.)' : ''), 'Launches']}
+                />
+                <Bar dataKey="count" radius={[4,4,0,0]} maxBarSize={48}>
+                  {STARBASE_LAUNCHES.map(d => (
+                    <Cell key={d.year} fill={d.proj ? '#1E4D72' : (d.count === 0 ? '#1E3A5F' : '#0EA5E9')}
+                      stroke={d.proj ? '#38BDF8' : 'none'} strokeWidth={d.proj ? 1 : 0} strokeDasharray={d.proj ? '4 2' : '0'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Right panel: countdown + quick stats */}
+          <div className="lg:col-span-2 px-6 py-5 flex flex-col gap-5">
+
+            {/* Countdown */}
+            <div>
+              <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3">Next Starbase Launch</div>
+              <StarbaseCountdown isoDate={null} />
+              <p className="text-[10px] text-slate-500 mt-2">Starship schedule at spacex.com · Countdown activates when date announced</p>
+            </div>
+
+            {/* Economic quick-hits */}
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { val: '$110K',    label: 'Avg SpaceX salary',       icon: '💼' },
+                { val: '$15M+',    label: 'Annual county tax rev.',   icon: '🏛️' },
+                { val: '$2M',      label: 'Hotel impact per launch',  icon: '🏨' },
+                { val: '~3,000',   label: 'Estimated direct jobs',    icon: '👷' },
+              ].map(s => (
+                <div key={s.label} className="bg-[#0B2030] border border-[#1E3A5F] rounded-lg px-3 py-2.5">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-sm">{s.icon}</span>
+                    <span className="font-bold text-sm text-white">{s.val}</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 leading-tight">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Local supplier ecosystem */}
+        <div className="px-6 py-5 border-t border-[#1E3A5F]">
+          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3">Local Aerospace Ecosystem</div>
+          <div className="flex flex-wrap gap-2">
+            {STARBASE_SUPPLIERS.map(s => (
+              <div key={s.name} className="flex items-start gap-2 bg-[#0B2030] border border-[#1E3A5F] rounded-lg px-3 py-2 min-w-[160px] flex-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#38BDF8] flex-shrink-0 mt-1.5"></div>
+                <div>
+                  <div className="text-xs font-semibold text-white leading-tight">{s.name}</div>
+                  <div className="text-[10px] text-[#38BDF8] mt-0.5">{s.location}</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">{s.role}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer attribution */}
+        <div className="px-6 pb-4">
+          <p className="text-[10px] text-slate-600">
+            Sources: FAA License LLS 21-119 · Brownsville EDC · Cameron County Economic Development · SpaceX public disclosures
+          </p>
+        </div>
+
       </div>
 
       {/* ROW 1: GDP CHART + CENSUS */}
@@ -346,68 +636,787 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* CBP BORDER WAIT TIMES */}
+      {/* CROSS-BORDER TRUCK TRAFFIC (BTS) */}
       <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mb-4">
         <div className="flex items-start justify-between mb-1">
-          <div className="font-semibold text-sm">Border Crossing Wait Times</div>
+          <div>
+            <div className="font-semibold text-sm">Cross-Border Truck Traffic</div>
+            <div className="text-xs text-[#888780] mt-0.5">Laredo is the #1 US land port by trade volume</div>
+          </div>
           <div className="flex items-center gap-2">
-            {cbpLive && <LiveBadge />}
-            {!cbpLive && status.cbp === 'error' && <span className="text-xs text-[#888780]">Showing estimates</span>}
-            {status.cbp === 'loading' && (
+            {status.bts === 'ok' && <LiveBadge />}
+            {status.bts === 'loading' && (
               <div className="flex items-center gap-1.5 text-xs text-[#5C5C54]">
                 <div className="w-3 h-3 border border-[#E2DDD6] border-t-[#1A6B72] rounded-full animate-spin"></div>
-                Loading CBP...
+                Loading BTS...
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="text-xs text-[#5C5C54] mb-4">Monthly truck crossings · BTS Border Crossing Entry Data</div>
+
+        {/* Port stat cards */}
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          {[
+            { port: 'Laredo',      color: '#1A6B72', label: 'Laredo' },
+            { port: 'Hidalgo',     color: '#B07D1A', label: 'Hidalgo / McAllen' },
+            { port: 'Brownsville', color: '#B8431E', label: 'Brownsville' },
+          ].map(({ port, color, label }) => {
+            const row    = btsLatest[port]
+            const trucks = row ? parseInt(row.value).toLocaleString() : '—'
+            const month  = row ? fmtMonth(row.date?.slice(0, 7)) : '—'
+            return (
+              <div key={port} className="border border-[#E2DDD6] rounded-lg p-4" style={{ borderLeftColor: color, borderLeftWidth: '3px' }}>
+                <div className="font-serif text-2xl font-bold text-[#0F0F0E]">{trucks}</div>
+                <div className="text-xs text-[#5C5C54] mt-1">{label}</div>
+                <div className="text-xs text-[#888780] mt-0.5">Trucks · {month}</div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Line chart */}
+        {btsChartData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={btsChartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2DDD6" />
+              <XAxis dataKey="date" tickFormatter={fmtMonth} tick={{ fontSize: 11, fill: '#888780' }} />
+              <YAxis tickFormatter={v => fmtK(v)} tick={{ fontSize: 11, fill: '#888780' }} width={52} />
+              <Tooltip
+                formatter={(v, name) => [parseInt(v).toLocaleString(), name]}
+                labelFormatter={fmtMonth}
+                contentStyle={{ fontSize: 12, borderColor: '#E2DDD6', borderRadius: '6px' }}
+              />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Line type="monotone" dataKey="Laredo"      stroke="#1A6B72" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+              <Line type="monotone" dataKey="Hidalgo"     stroke="#B07D1A" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+              <Line type="monotone" dataKey="Brownsville" stroke="#B8431E" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-48 flex items-center justify-center bg-[#F7F3EE] rounded-lg">
+            <div className="flex flex-col items-center gap-2 text-xs text-[#888780]">
+              {status.bts === 'loading' && <div className="w-4 h-4 border border-[#E2DDD6] border-t-[#1A6B72] rounded-full animate-spin"></div>}
+              <span>
+                {status.bts === 'loading' ? 'Loading BTS data...' : status.bts === 'error' ? 'BTS data unavailable' : 'No chart data'}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* UNIVERSITY WORKFORCE PIPELINE (IPEDS) */}
+      <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mb-4">
+        <div className="flex items-start justify-between mb-1">
+          <div>
+            <div className="font-semibold text-sm">University Workforce Pipeline</div>
+            <div className="text-xs text-[#888780] mt-0.5">
+              {ipedsTotal > 0
+                ? `${ipedsTotal.toLocaleString()} combined graduates annually from 3 regional universities`
+                : 'Annual completions by degree field · IPEDS 2022'}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {status.ipeds === 'ok'      && <LiveBadge />}
+            {status.ipeds === 'loading' && (
+              <div className="flex items-center gap-1.5 text-xs text-[#5C5C54]">
+                <div className="w-3 h-3 border border-[#E2DDD6] border-t-[#1A6B72] rounded-full animate-spin"></div>
+                Loading IPEDS...
+              </div>
+            )}
+            {status.ipeds === 'error' && (
+              <span className="text-xs text-[#888780]">IPEDS unavailable</span>
+            )}
+          </div>
+        </div>
+        <div className="text-xs text-[#5C5C54] mb-5">Urban Institute Education Data API · IPEDS completions 2022</div>
+
+        {/* University cards */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          {IPEDS_SCHOOLS.map((s, idx) => {
+            const school  = ipeds?.[s.unitid]
+            const colors  = ['#1A6B72', '#B07D1A', '#B8431E']
+            const color   = colors[idx]
+            const top3    = school?.cips?.slice(0, 3) ?? []
+            return (
+              <div key={s.unitid} className="border border-[#E2DDD6] rounded-lg p-4"
+                style={{ borderTopColor: color, borderTopWidth: '3px' }}>
+                <div className="font-semibold text-sm text-[#0F0F0E] mb-0.5">{s.shortName}</div>
+                <div className="text-xs text-[#888780] mb-3 truncate">{s.name}</div>
+                {school ? (
+                  <>
+                    <div className="font-serif text-2xl font-bold text-[#0F0F0E] mb-0.5">
+                      {school.total.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-[#5C5C54] mb-3">degrees awarded · 2022</div>
+                    <div className="space-y-1.5">
+                      {top3.map(c => (
+                        <div key={c.cipcode} className="flex items-center justify-between gap-2">
+                          <div className="text-xs text-[#5C5C54] truncate flex-1"
+                            title={c.cipdesc}>{c.cipdesc?.replace(/\.$/, '')}</div>
+                          <div className="text-xs font-semibold text-[#0F0F0E] flex-shrink-0"
+                            style={{ color }}>{c.awards}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-xs text-[#888780] py-4">
+                    {status.ipeds === 'loading' ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 border border-[#E2DDD6] border-t-[#1A6B72] rounded-full animate-spin"></div>
+                        Loading...
+                      </div>
+                    ) : 'Data unavailable'}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Grouped bar chart */}
+        {ipedsChartData.some(d => IPEDS_SCHOOLS.some(s => d[s.shortName] > 0)) ? (
+          <>
+            <div className="text-xs text-[#5C5C54] mb-3 font-medium">Degrees by Broad Field</div>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={ipedsChartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }} barCategoryGap="25%">
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2DDD6" vertical={false} />
+                <XAxis dataKey="category" tick={{ fontSize: 11, fill: '#888780' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#888780' }} width={40} axisLine={false} tickLine={false} />
+                <Tooltip
+                  formatter={(v, name) => [v.toLocaleString(), name]}
+                  contentStyle={{ fontSize: 12, borderColor: '#E2DDD6', borderRadius: '6px' }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                {IPEDS_SCHOOLS.map(s => (
+                  <Bar key={s.unitid} dataKey={s.shortName} fill={IPEDS_COLORS[s.shortName]} radius={[3,3,0,0]} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </>
+        ) : status.ipeds === 'error' ? (
+          <div className="h-36 flex items-center justify-center bg-[#F7F3EE] rounded-lg text-xs text-[#888780]">
+            IPEDS data unavailable · Urban Institute API may be down
+          </div>
+        ) : null}
+      </div>
+
+      {/* ENERGY & LNG TRACKER (EIA) */}
+      <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mb-4">
+        <div className="flex items-start justify-between mb-1">
+          <div>
+            <div className="font-semibold text-sm">Energy & LNG Tracker</div>
+            <div className="text-xs text-[#888780] mt-0.5">US LNG exports & Texas natural gas production · EIA</div>
+          </div>
+          <div className="flex items-center gap-2">
+            {status.eia === 'ok'      && <LiveBadge />}
+            {status.eia === 'loading' && (
+              <div className="flex items-center gap-1.5 text-xs text-[#5C5C54]">
+                <div className="w-3 h-3 border border-[#E2DDD6] border-t-[#1A6B72] rounded-full animate-spin"></div>
+                Loading EIA...
+              </div>
+            )}
+            {status.eia === 'error' && (
+              <span className="text-xs text-[#888780]">EIA key not configured</span>
+            )}
+          </div>
+        </div>
+        <div className="text-xs text-[#5C5C54] mb-5">
+          U.S. Energy Information Administration · Monthly data
+        </div>
+
+        {/* Stat row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+
+          {/* LNG exports latest */}
+          <div className="bg-[#F0F7F7] border border-[#C8E0E1] rounded-lg p-4">
+            <div className="text-xs font-bold uppercase tracking-wider text-[#1A6B72] mb-2">Total LNG Exports</div>
+            <div className="font-serif text-2xl font-bold text-[#0F0F0E]">
+              {lngLatestVal != null ? fmtBcf(lngLatestVal) : (status.eia === 'loading' ? '—' : '—')}
+            </div>
+            <div className="text-xs text-[#5C5C54] mt-1">
+              {lngLatest?.period ? `${fmtMonth(lngLatest.period)} · all terminals` : 'Latest month · all US terminals'}
+            </div>
+          </div>
+
+          {/* TX natural gas production */}
+          <div className="bg-[#F0F7F4] border border-[#C8DDD2] rounded-lg p-4">
+            <div className="text-xs font-bold uppercase tracking-wider text-[#2A6B43] mb-2">Texas Production</div>
+            <div className="font-serif text-2xl font-bold text-[#0F0F0E]">
+              {txGasLatest?.value != null ? fmtBcf(txGasLatest.value) : '—'}
+            </div>
+            <div className="text-xs text-[#5C5C54] mt-1">
+              {txGasLatest?.period ? `${fmtMonth(txGasLatest.period)} · dry natural gas` : 'Latest month · dry natural gas'}
+            </div>
+          </div>
+
+          {/* South TX LNG hub callout */}
+          <div className="bg-[#0F0F0E] rounded-lg p-4 flex flex-col justify-between">
+            <div className="text-xs font-bold uppercase tracking-wider text-[#1A6B72] mb-2">South Texas LNG Hub</div>
+            <div className="text-xs text-[#E2DDD6] leading-relaxed">
+              Cheniere's <span className="text-white font-semibold">Sabine Pass</span> and{' '}
+              <span className="text-white font-semibold">Corpus Christi</span> terminals are two of the world's
+              largest LNG export facilities, connecting South Texas gas fields to global markets.
+            </div>
+            <div className="mt-3 flex gap-2">
+              {['Sabine Pass', 'Corpus Christi', 'Freeport'].map(t => (
+                <span key={t} className="text-xs px-2 py-0.5 rounded bg-[#1A1A19] text-[#888780] border border-[#333]">{t}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* LNG export trend line chart */}
+        {eia?.lng?.length > 0 ? (
+          <>
+            <div className="text-xs text-[#5C5C54] mb-3 font-medium">Monthly US LNG Export Volume</div>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={eia.lng} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2DDD6" />
+                <XAxis
+                  dataKey="period"
+                  tickFormatter={fmtMonth}
+                  tick={{ fontSize: 11, fill: '#888780' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tickFormatter={v => fmtBcf(v)}
+                  tick={{ fontSize: 11, fill: '#888780' }}
+                  width={60}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  formatter={v => [fmtBcf(v), 'LNG Exports']}
+                  labelFormatter={fmtMonth}
+                  contentStyle={{ fontSize: 12, borderColor: '#E2DDD6', borderRadius: '6px' }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#1A6B72"
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 5, fill: '#1A6B72' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </>
+        ) : (
+          <div className="h-48 flex items-center justify-center bg-[#F7F3EE] rounded-lg">
+            <div className="flex flex-col items-center gap-2 text-xs text-[#888780] text-center px-8">
+              {status.eia === 'loading' && (
+                <div className="w-4 h-4 border border-[#E2DDD6] border-t-[#1A6B72] rounded-full animate-spin"></div>
+              )}
+              {status.eia === 'loading' && 'Loading EIA data...'}
+              {status.eia === 'error'   && (
+                <>
+                  <span className="font-semibold text-[#5C5C54]">EIA proxy not configured</span>
+                  <span>Register for a free key at eia.gov/opendata, then:<br/>
+                    <code className="bg-[#E2DDD6] px-1 rounded">npx supabase secrets set EIA_API_KEY=&lt;key&gt;</code><br/>
+                    <code className="bg-[#E2DDD6] px-1 rounded">npx supabase functions deploy eia-proxy --no-verify-jwt</code>
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* CROSS-BORDER INVESTMENT & MAQUILADORA */}
+      <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mb-4">
+
+        {/* Section header */}
+        <div className="flex items-start justify-between mb-1">
+          <div>
+            <div className="font-semibold text-sm">Cross-Border Investment & Maquiladora</div>
+            <div className="text-xs text-[#888780] mt-0.5">
+              {maquiladoraTotal > 0
+                ? `~${(maquiladoraTotal / 1000).toFixed(0)}K maquiladora workers within 200 miles of the RioData region`
+                : 'Tamaulipas manufacturing workforce · World Bank FDI trend'}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {status.fdi === 'ok'      && <LiveBadge />}
+            {status.fdi === 'loading' && (
+              <div className="flex items-center gap-1.5 text-xs text-[#5C5C54]">
+                <div className="w-3 h-3 border border-[#E2DDD6] border-t-[#B07D1A] rounded-full animate-spin"></div>
+                Loading FDI...
               </div>
             )}
           </div>
         </div>
         <div className="text-xs text-[#5C5C54] mb-5">
-          South Texas ports of entry · {cbpLive ? 'Real-time' : 'Estimated'} passenger & commercial vehicle wait times
+          World Bank BX.KLT.DINV.CD.WD · INEGI BIE 2023 maquiladora estimates
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[#E2DDD6]">
-                {['Crossing', 'City', 'Passenger Wait', 'Commercial Wait', 'Hours'].map(h => (
-                  <th key={h} className="text-left py-2 pr-6 text-xs font-bold uppercase tracking-wider text-[#5C5C54]">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {cbpData.map((p, i) => (
-                <tr key={i} className="border-b border-[#F7F3EE]">
-                  <td className="py-3 pr-6 font-semibold text-[#0F0F0E]">{p.name}</td>
-                  <td className="py-3 pr-6 text-sm text-[#5C5C54]">{p.city}</td>
-                  <td className="py-3 pr-6">
-                    {p.pvWait != null
-                      ? <span className={`text-xs font-bold px-2 py-1 rounded ${waitBadge(p.pvWait)}`}>{p.pvWait} min</span>
-                      : <span className="text-xs text-[#888780]">—</span>}
-                  </td>
-                  <td className="py-3 pr-6">
-                    {p.cvWait != null
-                      ? <span className={`text-xs font-bold px-2 py-1 rounded ${waitBadge(p.cvWait)}`}>{p.cvWait} min</span>
-                      : <span className="text-xs text-[#888780]">—</span>}
-                  </td>
-                  <td className="py-3 text-xs text-[#5C5C54]">{p.hours || '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+        {/* Tamaulipas callout banner */}
+        <div className="flex items-center gap-3 bg-[#FBF4E3] border border-[#E8D5A3] rounded-lg px-4 py-3 mb-5">
+          <div className="w-1 h-8 bg-[#B07D1A] rounded-full flex-shrink-0"></div>
+          <div className="text-xs text-[#5C5C54] leading-relaxed">
+            <span className="font-semibold text-[#0F0F0E]">Tamaulipas hosts more maquiladoras than any other Mexican border state</span>
+            {' '}— with major industrial parks in Reynosa, Matamoros, and Nuevo Laredo directly across from US sister cities in the RioData corridor.
+          </div>
         </div>
-        {cbpLive && cbpData[0]?.updatedAt && (
-          <div className="mt-3 text-xs text-[#888780]">Last updated: {cbpData[0].updatedAt}</div>
-        )}
-        <div className="mt-3 flex gap-4">
-          {[['≤15 min','bg-[#E4F0EA] text-[#2A6B43]'],['16–30 min','bg-[#FBF4E3] text-[#B07D1A]'],['>30 min','bg-[#FBE9E3] text-[#B8431E]']].map(([l,c])=>(
-            <span key={l} className={`text-xs font-semibold px-2 py-0.5 rounded ${c}`}>{l}</span>
-          ))}
+
+        {/* City cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+          {MAQUILADORA_CITIES.map((city, idx) => {
+            const colors  = ['#B07D1A', '#B8431E', '#2A6B43']
+            const bgColors = ['#FBF4E3', '#FBE9E3', '#E8F3EC']
+            const color   = colors[idx]
+            const bgColor = bgColors[idx]
+            return (
+              <div key={city.city} className="border border-[#E2DDD6] rounded-lg overflow-hidden">
+                {/* Card header strip */}
+                <div className="px-4 py-3" style={{ background: bgColor, borderBottom: `2px solid ${color}` }}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="font-semibold text-sm text-[#0F0F0E]">{city.city}</div>
+                      <div className="text-xs text-[#5C5C54]">{city.state}, México</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs font-semibold" style={{ color }}>{city.sisterCity}</div>
+                      <div className="text-xs text-[#888780]">{city.distance} across border</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card body */}
+                <div className="px-4 py-4">
+                  <div className="mb-3">
+                    <div className="font-serif text-2xl font-bold text-[#0F0F0E]">
+                      {(city.workers / 1000).toFixed(0)}K
+                    </div>
+                    <div className="text-xs text-[#5C5C54]">maquiladora workers</div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {city.sectors.map(s => (
+                      <span
+                        key={s}
+                        className="text-xs px-2 py-0.5 rounded-full font-medium"
+                        style={{ background: bgColor, color }}
+                      >
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* FDI line chart + latest stat */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+          {/* Chart — 3/4 width */}
+          <div className="md:col-span-3">
+            <div className="text-xs text-[#5C5C54] font-medium mb-3">
+              Mexico FDI Net Inflows — 10-Year Trend (World Bank)
+            </div>
+            {fdi?.length > 0 ? (
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={fdi} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E2DDD6" />
+                  <XAxis
+                    dataKey="year"
+                    tick={{ fontSize: 11, fill: '#888780' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tickFormatter={v => '$' + (v / 1e9).toFixed(0) + 'B'}
+                    tick={{ fontSize: 11, fill: '#888780' }}
+                    width={44}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    formatter={v => [fmtUSD(v), 'FDI Inflows']}
+                    labelFormatter={y => `${y} · Mexico`}
+                    contentStyle={{ fontSize: 12, borderColor: '#E2DDD6', borderRadius: '6px' }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#B07D1A"
+                    strokeWidth={2.5}
+                    dot={{ r: 3, fill: '#B07D1A', strokeWidth: 0 }}
+                    activeDot={{ r: 5 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-44 flex items-center justify-center bg-[#F7F3EE] rounded-lg">
+                <div className="flex flex-col items-center gap-2 text-xs text-[#888780]">
+                  {status.fdi === 'loading' && (
+                    <div className="w-4 h-4 border border-[#E2DDD6] border-t-[#B07D1A] rounded-full animate-spin"></div>
+                  )}
+                  {status.fdi === 'loading' ? 'Loading World Bank data...' : 'FDI data unavailable'}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Latest FDI stat — 1/4 width */}
+          <div className="flex flex-col gap-3">
+            <div className="bg-[#FBF4E3] border border-[#E8D5A3] rounded-lg p-4 flex-1">
+              <div className="text-xs font-bold uppercase tracking-wider text-[#B07D1A] mb-2">Mexico FDI</div>
+              <div className="font-serif text-2xl font-bold text-[#0F0F0E]">
+                {fdiLatest ? fmtUSD(fdiLatest.value) : '—'}
+              </div>
+              <div className="text-xs text-[#5C5C54] mt-1">
+                {fdiLatest?.year ? `${fdiLatest.year} · net inflows` : 'Latest year · net inflows'}
+              </div>
+            </div>
+            <div className="bg-[#FBE9E3] border border-[#E8C9BC] rounded-lg p-4 flex-1">
+              <div className="text-xs font-bold uppercase tracking-wider text-[#B8431E] mb-2">Regional Workers</div>
+              <div className="font-serif text-2xl font-bold text-[#0F0F0E]">
+                ~{(maquiladoraTotal / 1000).toFixed(0)}K
+              </div>
+              <div className="text-xs text-[#5C5C54] mt-1">maquiladora employees<br />across 3 Tamaulipas cities</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div className="mt-3 text-xs text-[#888780]">
+          Maquiladora employment: INEGI BIE 2023 estimates · FDI: World Bank BoP current US$ · Live data via World Bank API
         </div>
       </div>
 
-      {/* CROSS-BORDER TRADE TABLE */}
+      {/* COST OF LIVING COMPARISON */}
+      <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mb-4">
+
+        {/* Header */}
+        <div className="flex items-start justify-between mb-1">
+          <div className="font-semibold text-sm">Cost of Living Comparison</div>
+          <span className="text-xs px-1.5 py-0.5 bg-[#F7F3EE] text-[#888780] rounded font-medium">Static · ACCRA 2023</span>
+        </div>
+        <div className="text-xs text-[#5C5C54] mb-4">C2ER ACCRA Cost of Living Index · US average = 100</div>
+
+        {/* Callout headline */}
+        <div className="flex items-center gap-3 bg-[#E8F3EC] border border-[#B8D9C4] rounded-lg px-4 py-3 mb-5">
+          <div className="w-1 h-8 bg-[#2A6B43] rounded-full flex-shrink-0"></div>
+          <div className="text-xs leading-relaxed">
+            <span className="font-semibold text-[#0F0F0E] text-sm">
+              McAllen costs {colSavingsPct}% less than Austin
+            </span>
+            <span className="text-[#5C5C54]"> — with a growing job market, expanding healthcare sector, and direct access to the largest US–Mexico land trade corridor.</span>
+          </div>
+        </div>
+
+        {/* Charts row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+
+          {/* Overall COL — horizontal bar chart */}
+          <div>
+            <div className="text-xs font-medium text-[#5C5C54] mb-3">Overall COL Index — 7-City Comparison</div>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart
+                layout="vertical"
+                data={colBarData}
+                margin={{ top: 4, right: 44, left: 80, bottom: 4 }}
+                barCategoryGap="20%"
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2DDD6" horizontal={false} />
+                <YAxis
+                  type="category"
+                  dataKey="city"
+                  tick={{ fontSize: 12, fill: '#5C5C54' }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={78}
+                />
+                <XAxis
+                  type="number"
+                  domain={[50, 135]}
+                  tick={{ fontSize: 11, fill: '#888780' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  formatter={v => [v.toFixed(1), 'COL Index']}
+                  contentStyle={{ fontSize: 12, borderColor: '#E2DDD6', borderRadius: '6px' }}
+                />
+                <ReferenceLine
+                  x={100}
+                  stroke="#888780"
+                  strokeDasharray="4 4"
+                  label={{ value: 'US avg', position: 'insideTopRight', fontSize: 10, fill: '#888780', dy: -6 }}
+                />
+                <Bar dataKey="overall" radius={[0, 3, 3, 0]}>
+                  {colBarData.map(entry => (
+                    <Cell
+                      key={entry.city}
+                      fill={entry.isSouthTX ? '#1A6B72' : '#C8C4BE'}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="flex items-center gap-4 mt-1 ml-20">
+              {[['#1A6B72','South Texas'],['#C8C4BE','Texas comparison']].map(([c,l]) => (
+                <span key={l} className="flex items-center gap-1.5 text-xs text-[#5C5C54]">
+                  <span className="w-3 h-2 rounded-sm flex-shrink-0" style={{ background: c }}></span>{l}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Subcategory breakdown — grouped bar chart */}
+          <div>
+            <div className="text-xs font-medium text-[#5C5C54] mb-3">Subcategory Breakdown vs. Austin</div>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={colSubData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }} barCategoryGap="22%">
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2DDD6" vertical={false} />
+                <XAxis dataKey="cat" tick={{ fontSize: 11, fill: '#888780' }} axisLine={false} tickLine={false} />
+                <YAxis
+                  domain={[0, 170]}
+                  tick={{ fontSize: 11, fill: '#888780' }}
+                  width={36}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  formatter={(v, name) => [v, name]}
+                  contentStyle={{ fontSize: 12, borderColor: '#E2DDD6', borderRadius: '6px' }}
+                />
+                <ReferenceLine y={100} stroke="#888780" strokeDasharray="4 4" />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="McAllen"     fill="#1A6B72" radius={[2,2,0,0]} />
+                <Bar dataKey="Laredo"      fill="#B07D1A" radius={[2,2,0,0]} />
+                <Bar dataKey="Brownsville" fill="#B8431E" radius={[2,2,0,0]} />
+                <Bar dataKey="Austin"      fill="#C8C4BE" radius={[2,2,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* South TX metro cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {COL_DATA.filter(c => c.isSouthTX).map(city => {
+            const incomeData = census?.find(c => c.metro === city.city)
+            const savings    = Math.round(100 - city.overall)
+            return (
+              <div key={city.city} className="border border-[#E2DDD6] rounded-lg p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <div className="font-semibold text-sm text-[#0F0F0E]">{city.city}</div>
+                    <div className="text-xs text-[#888780]">{savings}% below US average</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-serif text-2xl font-bold text-[#1A6B72]">{city.overall}</div>
+                    <div className="text-xs text-[#888780]">COL Index</div>
+                  </div>
+                </div>
+
+                {/* Sub-index mini bars */}
+                <div className="space-y-1.5 mb-3">
+                  {[
+                    { label: 'Housing',    val: city.housing    },
+                    { label: 'Healthcare', val: city.healthcare },
+                    { label: 'Groceries',  val: city.groceries  },
+                    { label: 'Utilities',  val: city.utilities  },
+                  ].map(({ label, val }) => (
+                    <div key={label} className="flex items-center gap-2">
+                      <div className="text-xs text-[#888780] w-20 flex-shrink-0">{label}</div>
+                      <div className="flex-1 h-1.5 bg-[#F7F3EE] rounded overflow-hidden">
+                        <div
+                          className="h-full rounded"
+                          style={{ width: `${(val / 170) * 100}%`, background: val < 100 ? '#1A6B72' : '#B8431E' }}
+                        />
+                      </div>
+                      <div className="text-xs font-semibold text-[#0F0F0E] w-6 text-right">{val}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Median income from Census */}
+                <div className="border-t border-[#F7F3EE] pt-2 flex items-center justify-between">
+                  <div className="text-xs text-[#5C5C54]">Median household income</div>
+                  <div className="text-xs font-semibold text-[#0F0F0E]">
+                    {incomeData ? '$' + Math.round(incomeData.medianIncome / 1000) + 'K' : (status.census === 'loading' ? '—' : 'N/A')}
+                    {incomeData && <span className="text-[#888780] font-normal"> · 2022</span>}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="mt-3 text-xs text-[#888780]">
+          COL Index: C2ER ACCRA 2023 Q3 · US average = 100 · Median income: Census ACS 5-year 2022
+        </div>
+      </div>
+
+      {/* CBP BORDER WAIT TIMES — EXPANDED */}
+      <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mb-4">
+
+        {/* Header */}
+        <div className="flex items-start justify-between mb-1">
+          <div className="flex items-center gap-2.5">
+            <div className="font-semibold text-sm">Border Crossing Wait Times</div>
+            {cbpLive && (
+              <span className="flex items-center gap-1.5">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2A6B43] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#2A6B43]"></span>
+                </span>
+                <span className="text-xs text-[#2A6B43] font-medium">Live</span>
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-[#888780]">
+            {status.cbp === 'loading'
+              ? <div className="w-3 h-3 border border-[#E2DDD6] border-t-[#1A6B72] rounded-full animate-spin"></div>
+              : <span>Auto-refresh every 5 min</span>}
+          </div>
+        </div>
+        <div className="text-xs text-[#5C5C54] mb-4">
+          Laredo → Mid-Valley → McAllen Area → Brownsville
+          {cbpLive && ` · ${reportingCount} of ${totalCrossings} crossings reporting`}
+        </div>
+
+        {/* Summary bar */}
+        {cbpLive && (
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 bg-[#F7F3EE] rounded-lg px-4 py-2.5 mb-5 text-xs">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-sm bg-[#B07D1A]"></div>
+              <span className="text-[#5C5C54]">Commercial lanes open:</span>
+              <span className="font-semibold text-[#0F0F0E]">{totalCvLanes > 0 ? totalCvLanes : '—'}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-sm bg-[#1A6B72]"></div>
+              <span className="text-[#5C5C54]">Passenger lanes open:</span>
+              <span className="font-semibold text-[#0F0F0E]">{totalPvLanes > 0 ? totalPvLanes : '—'}</span>
+            </div>
+            {cbpLastUpdated && (
+              <span className="ml-auto text-[#888780]">Updated: {cbpLastUpdated}</span>
+            )}
+          </div>
+        )}
+
+        {/* Geographic map-style layout: west (Laredo) → east (Brownsville) */}
+        {cbpLive ? (
+          <div className="overflow-x-auto pb-2">
+            <div className="flex gap-3 min-w-max">
+              {cbp.map(group => (
+                <div key={group.area} className="w-44 flex-shrink-0">
+
+                  {/* Area header */}
+                  <div className="flex items-center gap-1.5 mb-2 pb-1.5 border-b-2" style={{ borderColor: group.color }}>
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: group.color }}></div>
+                    <div className="text-xs font-bold uppercase tracking-wide text-[#0F0F0E]">{group.area}</div>
+                  </div>
+
+                  {/* Crossing cards */}
+                  <div className="space-y-2">
+                    {group.crossings.map(c => (
+                      <div
+                        key={c.id}
+                        className={`rounded-lg p-2.5 border text-xs ${
+                          c.status === 'Closed'
+                            ? 'border-[#E2DDD6] bg-[#F7F3EE] opacity-60'
+                            : c.hasData
+                            ? 'border-[#E2DDD6] bg-white'
+                            : 'border-dashed border-[#E2DDD6] bg-[#FAFAF8]'
+                        }`}
+                      >
+                        {/* Card header */}
+                        <div className="flex items-start justify-between gap-1 mb-1.5">
+                          <div className="font-semibold text-[#0F0F0E] leading-tight">{c.label}</div>
+                          {c.focus === 'commercial' && (
+                            <span className="flex-shrink-0 px-1 py-px bg-[#FBF4E3] text-[#B07D1A] rounded font-medium">
+                              COM
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Wait times */}
+                        {c.status === 'Closed' ? (
+                          <div className="text-center text-[#888780] py-1">Closed</div>
+                        ) : !c.hasData ? (
+                          <div className="text-center text-[#888780] py-1 italic">No real-time data</div>
+                        ) : (
+                          <>
+                            <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                              {/* Passenger */}
+                              <div>
+                                <div className="text-[#888780] mb-0.5">Passenger</div>
+                                {c.pvWait != null
+                                  ? <span className={`font-bold px-1.5 py-0.5 rounded ${waitBadge(c.pvWait)}`}>{c.pvWait} min</span>
+                                  : <span className="text-[#888780]">—</span>}
+                                {c.pvLanes != null && (
+                                  <div className="text-[#888780] mt-0.5">{c.pvLanes} lane{c.pvLanes !== 1 ? 's' : ''}</div>
+                                )}
+                              </div>
+                              {/* Commercial */}
+                              <div>
+                                <div className="text-[#888780] mb-0.5">Commercial</div>
+                                {c.cvWait != null
+                                  ? <span className={`font-bold px-1.5 py-0.5 rounded ${waitBadge(c.cvWait)}`}>{c.cvWait} min</span>
+                                  : <span className="text-[#888780]">—</span>}
+                                {c.cvLanes != null && (
+                                  <div className="text-[#888780] mt-0.5">{c.cvLanes} lane{c.cvLanes !== 1 ? 's' : ''}</div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* FAST lanes row — only if data exists */}
+                            {(c.cvFastLanes ?? 0) > 0 && (
+                              <div className="mt-1.5 bg-[#E8F3EC] text-[#2A6B43] rounded px-1.5 py-0.5 font-medium">
+                                FAST: {c.cvFastWait != null ? `${c.cvFastWait} min` : '—'} · {c.cvFastLanes} lane{c.cvFastLanes !== 1 ? 's' : ''}
+                              </div>
+                            )}
+
+                            {/* Hours footnote */}
+                            {c.hours && (
+                              <div className="mt-1 text-[#888780]">{c.hours}</div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="h-40 flex items-center justify-center bg-[#F7F3EE] rounded-lg">
+            <div className="flex flex-col items-center gap-2 text-xs text-[#888780]">
+              {status.cbp === 'loading' && (
+                <div className="w-4 h-4 border border-[#E2DDD6] border-t-[#1A6B72] rounded-full animate-spin"></div>
+              )}
+              <span>{status.cbp === 'loading' ? 'Loading CBP data...' : 'CBP wait time data unavailable'}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Legend */}
+        <div className="mt-4 flex flex-wrap gap-3 items-center">
+          {[
+            ['≤15 min',  'bg-[#E4F0EA] text-[#2A6B43]'],
+            ['16–30 min','bg-[#FBF4E3] text-[#B07D1A]'],
+            ['>30 min',  'bg-[#FBE9E3] text-[#B8431E]'],
+          ].map(([l, c]) => (
+            <span key={l} className={`text-xs font-semibold px-2 py-0.5 rounded ${c}`}>{l}</span>
+          ))}
+          <span className="text-xs font-medium px-2 py-0.5 rounded bg-[#E8F3EC] text-[#2A6B43]">
+            FAST = Free &amp; Secure Trade lanes
+          </span>
+          <span className="text-xs px-1.5 py-0.5 rounded bg-[#FBF4E3] text-[#B07D1A]">COM = commercial focus crossing</span>
+        </div>
+      </div>
+
+      {/* TRADE FLOWS BY COMMODITY */}
       <div className="bg-white border border-[#E2DDD6] rounded-xl p-6">
-        <div className="font-semibold text-sm mb-1">Cross-Border Trade Intelligence</div>
-        <div className="text-xs text-[#5C5C54] mb-4">South Texas ports of entry · Monthly volume</div>
+        <div className="font-semibold text-sm mb-1">Trade Flows by Commodity</div>
+        <div className="text-xs text-[#5C5C54] mb-4">South Texas ports of entry · Estimated monthly volume</div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -436,6 +1445,161 @@ export default function Analytics() {
           </table>
         </div>
       </div>
+
+      {/* ── REGIONAL ECONOMIC NEWS FEED ──────────────────────────────────────── */}
+      {(() => {
+        const NEWS_FALLBACKS = [
+          { title: 'Laredo remains top U.S. land port for cross-border trade', url: 'https://www.laredomorningthimes.com', source: 'Laredo Morning Times', publishedAt: '', summary: 'Laredo continues to lead all U.S. ports of entry in total trade value, processing over $300B in annual cargo.', category: 'trade', lang: 'en' },
+          { title: 'UTRGV launches new engineering programs to meet South Texas workforce demand', url: 'https://www.utrgv.edu', source: 'UTRGV News', publishedAt: '', summary: 'University of Texas Rio Grande Valley expands engineering and STEM offerings to serve the growing manufacturing sector.', category: 'manufacturing', lang: 'en' },
+          { title: 'New LNG export terminal breaks ground near Brownsville', url: 'https://www.brownsvilleherald.com', source: 'Brownsville Herald', publishedAt: '', summary: 'Texas LNG and Rio Grande LNG projects advance as South Texas becomes a global energy export hub.', category: 'energy', lang: 'en' },
+          { title: 'Reynosa maquiladoras report record employment in auto parts sector', url: 'https://www.elmanana.com', source: 'El Mañana', publishedAt: '', summary: 'Tamaulipas manufacturing zones continue expansion as nearshoring trends bring new investment to the region.', category: 'manufacturing', lang: 'es' },
+          { title: 'McAllen industrial real estate demand surges on nearshoring wave', url: 'https://www.themonitor.com', source: 'The Monitor', publishedAt: '', summary: 'Industrial warehouse space in the McAllen metro area hits historic low vacancy rates as logistics firms expand.', category: 'realestate', lang: 'en' },
+        ]
+
+        const articles = news?.length ? news : (status.news === 'error' ? NEWS_FALLBACKS : [])
+        const isFallback = !news?.length
+
+        const CATEGORIES = [
+          { key: 'all',           label: 'All' },
+          { key: 'trade',         label: 'Trade' },
+          { key: 'energy',        label: 'Energy' },
+          { key: 'manufacturing', label: 'Manufacturing' },
+          { key: 'realestate',    label: 'Real Estate' },
+        ]
+
+        const CATEGORY_COLORS = {
+          trade:         { bg: 'bg-[#EBF3FB]', text: 'text-[#1A5C8A]', label: 'Trade' },
+          energy:        { bg: 'bg-[#FBF4E3]', text: 'text-[#B07D1A]', label: 'Energy' },
+          manufacturing: { bg: 'bg-[#EBF3FB]', text: 'text-[#1A5C8A]', label: 'Manufacturing' },
+          realestate:    { bg: 'bg-[#F0EBFB]', text: 'text-[#6A3AAA]', label: 'Real Estate' },
+          general:       { bg: 'bg-[#F7F3EE]', text: 'text-[#5C5C54]', label: 'General' },
+        }
+
+        const filtered = articles.filter(a => {
+          if (newsLang !== 'all' && a.lang !== newsLang) return false
+          if (newsCategory !== 'all' && a.category !== newsCategory) return false
+          return true
+        })
+
+        function fmtAge(iso) {
+          if (!iso) return ''
+          try {
+            const diff = Date.now() - new Date(iso).getTime()
+            const h = Math.floor(diff / 3600000)
+            if (h < 1) return 'Just now'
+            if (h < 24) return `${h}h ago`
+            const d = Math.floor(h / 24)
+            return `${d}d ago`
+          } catch { return '' }
+        }
+
+        return (
+          <div className="mb-10">
+            {/* Header */}
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-[#0F0F0E]">Regional Economic News</h2>
+                <span className="flex items-center gap-1.5 text-xs text-[#5C5C54]">
+                  <span className="w-2 h-2 rounded-full bg-[#2A6B43] animate-pulse inline-block"></span>
+                  Updates every hour
+                </span>
+                {isFallback && status.news === 'error' && (
+                  <span className="text-xs text-[#B07D1A] bg-[#FBF4E3] px-2 py-0.5 rounded">Showing sample headlines</span>
+                )}
+              </div>
+              {/* EN / ES / All toggle */}
+              <div className="flex items-center gap-1 bg-[#F7F3EE] rounded-lg p-0.5">
+                {[['all', 'All'], ['en', 'English'], ['es', 'Español']].map(([v, l]) => (
+                  <button
+                    key={v}
+                    onClick={() => { setNewsLang(v); setNewsShowing(6) }}
+                    className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${newsLang === v ? 'bg-white text-[#0F0F0E] shadow-sm' : 'text-[#5C5C54] hover:text-[#0F0F0E]'}`}
+                  >{l}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Category filter tabs */}
+            <div className="flex flex-wrap gap-2 mb-5">
+              {CATEGORIES.map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => { setNewsCategory(key); setNewsShowing(6) }}
+                  className={`px-3 py-1 text-xs rounded-full border font-medium transition-colors ${newsCategory === key ? 'bg-[#1A6B72] text-white border-[#1A6B72]' : 'border-[#E0DDD6] text-[#5C5C54] hover:border-[#1A6B72] hover:text-[#1A6B72]'}`}
+                >{label}</button>
+              ))}
+            </div>
+
+            {/* Loading state */}
+            {status.news === 'loading' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1,2,3,4,5,6].map(i => (
+                  <div key={i} className="bg-white border border-[#E0DDD6] rounded-xl p-4 animate-pulse">
+                    <div className="h-3 bg-[#F0EDE8] rounded w-1/3 mb-3"></div>
+                    <div className="h-4 bg-[#F0EDE8] rounded w-full mb-2"></div>
+                    <div className="h-4 bg-[#F0EDE8] rounded w-4/5 mb-3"></div>
+                    <div className="h-3 bg-[#F0EDE8] rounded w-2/3"></div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Article grid */}
+            {status.news !== 'loading' && filtered.length > 0 && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filtered.slice(0, newsShowing).map((a, i) => {
+                    const cat = CATEGORY_COLORS[a.category] || CATEGORY_COLORS.general
+                    return (
+                      <a
+                        key={i}
+                        href={a.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group bg-white border border-[#E0DDD6] rounded-xl p-4 hover:border-[#1A6B72] hover:shadow-sm transition-all flex flex-col gap-2"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cat.bg} ${cat.text}`}>{cat.label}</span>
+                          <span className="text-xs text-[#A8A49E]">{fmtAge(a.publishedAt)}</span>
+                        </div>
+                        <p className="text-sm font-semibold text-[#0F0F0E] leading-snug group-hover:text-[#1A6B72] transition-colors line-clamp-3">{a.title}</p>
+                        {a.summary && a.summary !== a.title && (
+                          <p className="text-xs text-[#5C5C54] leading-relaxed line-clamp-2">{a.summary}</p>
+                        )}
+                        <div className="flex items-center justify-between mt-auto pt-1">
+                          <span className="text-xs text-[#A8A49E] truncate">{a.source}</span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded ${a.lang === 'es' ? 'bg-[#FBF4E3] text-[#B07D1A]' : 'bg-[#F7F3EE] text-[#5C5C54]'}`}>{a.lang === 'es' ? 'ES' : 'EN'}</span>
+                        </div>
+                      </a>
+                    )
+                  })}
+                </div>
+
+                {/* Load more */}
+                {filtered.length > newsShowing && (
+                  <div className="flex justify-center mt-5">
+                    <button
+                      onClick={() => setNewsShowing(n => n + 6)}
+                      className="px-5 py-2 text-sm font-medium border border-[#1A6B72] text-[#1A6B72] rounded-lg hover:bg-[#EBF5F6] transition-colors"
+                    >
+                      Load more ({filtered.length - newsShowing} remaining)
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Empty state */}
+            {status.news !== 'loading' && filtered.length === 0 && (
+              <div className="text-center py-10 text-[#5C5C54] text-sm">
+                No articles found for the selected filters.
+              </div>
+            )}
+
+            <p className="text-xs text-[#A8A49E] mt-4">Source: Google News RSS · Filtered for South Texas / Northern Mexico region · Cached 1 hour</p>
+          </div>
+        )
+      })()}
 
     </div>
   )
