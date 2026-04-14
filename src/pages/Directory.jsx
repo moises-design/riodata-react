@@ -70,9 +70,9 @@ export default function Directory() {
     return (
         <>
             {/* HEADER */}
-            <div className="bg-[#0F0F0E] px-14 pt-11 pb-0">
+            <div className="bg-[#0F0F0E] px-4 sm:px-14 pt-8 sm:pt-11 pb-0">
                 <div className="text-xs font-bold tracking-widest text-[#E87850]/80 uppercase mb-2">Business Directory</div>
-                <div className="flex justify-between items-end pb-6 border-b border-white/8">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-end pb-6 border-b border-white/8 gap-3">
                     <div>
                         <h1 className="font-serif text-5xl font-bold tracking-tight text-white mb-1">Find Who's Ready to Work</h1>
                         <p className="text-sm text-white/40">{companies.length} verified companies across the region</p>
@@ -100,7 +100,7 @@ export default function Directory() {
             </div>
 
             {/* GRID */}
-            <div className="px-14 py-6 bg-[#F7F3EE]">
+            <div className="px-4 sm:px-14 py-6 bg-[#F7F3EE]">
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         {Array(6).fill(0).map((_,i)=>(

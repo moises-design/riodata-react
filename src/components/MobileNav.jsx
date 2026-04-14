@@ -17,12 +17,12 @@ export default function MobileNav() {
         const active = pathname === path || (path !== '/' && pathname.startsWith(path))
         return (
           <Link key={path} to={path}
-            className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors ${
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors relative ${
               active ? 'text-[#1A6B72]' : 'text-[#888780]'
             }`}>
+            {active && <span className="absolute top-0 left-2 right-2 h-0.5 rounded-b bg-[#1A6B72]" />}
             <span className="text-lg leading-none">{icon}</span>
             <span>{label}</span>
-            {active && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1A6B72]" style={{position:'relative'}} />}
           </Link>
         )
       })}

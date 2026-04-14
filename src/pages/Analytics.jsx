@@ -324,29 +324,29 @@ export default function Analytics() {
   const cbpLastUpdated = allCrossings.find(c => c.updatedAt)?.updatedAt ?? null
 
   return (
-    <div className="px-14 py-12">
+    <div className="px-4 sm:px-14 py-8 sm:py-12">
 
       {/* HEADER */}
       <div className="text-xs font-bold tracking-widest text-[#B8431E] uppercase mb-2 flex items-center gap-2">
         <span className="w-4 h-px bg-[#B8431E]"></span>Regional Intelligence
       </div>
-      <div className="flex items-end justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-3">
         <div>
-          <h1 className="font-serif text-5xl font-bold tracking-tight text-[#0F0F0E] mb-2">Analytics</h1>
+          <h1 className="font-serif text-4xl sm:text-5xl font-bold tracking-tight text-[#0F0F0E] mb-2">Analytics</h1>
           <p className="text-sm text-[#5C5C54]">Live economic data for the South Texas + Northern Mexico corridor.</p>
         </div>
-        <div className="flex items-center gap-4 pb-1">
+        <div className="hidden sm:flex items-center gap-4 pb-1 flex-wrap">
           {[
-            { label: 'FRED',   key: 'fred'   },
-            { label: 'Census', key: 'census' },
-            { label: 'CBP',    key: 'cbp'    },
-            { label: 'BLS',    key: 'bls'    },
-            { label: 'BTS',    key: 'bts'    },
-            { label: 'IPEDS',  key: 'ipeds'  },
-            { label: 'EIA',    key: 'eia'    },
-            { label: 'FDI',    key: 'fdi'    },
-            { label: 'News',   key: 'news'   },
-            { label: 'DallasFed', key: 'dallas' },
+            { label: 'FRED',     key: 'fred'   },
+            { label: 'Census',   key: 'census' },
+            { label: 'CBP',      key: 'cbp'    },
+            { label: 'BLS',      key: 'bls'    },
+            { label: 'BTS',      key: 'bts'    },
+            { label: 'IPEDS',    key: 'ipeds'  },
+            { label: 'Energy',   key: 'eia'    },
+            { label: 'FDI',      key: 'fdi'    },
+            { label: 'News',     key: 'news'   },
+            { label: 'DallasFed',key: 'dallas' },
           ].map(({ label, key }) => (
             <div key={key} className="flex items-center gap-1.5 text-xs text-[#5C5C54]">
               <StatusDot s={status[key]} />
@@ -429,7 +429,7 @@ export default function Analytics() {
         </div>
 
         {/* Hero stat bar */}
-        <div className="grid grid-cols-3 divide-x divide-[#1E3A5F] border-b border-[#1E3A5F]">
+        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[#1E3A5F] border-b border-[#1E3A5F]">
           {[
             { val: '3,000',   unit: 'Direct Jobs',         sub: 'SpaceX Boca Chica / Brownsville' },
             { val: '$600M+',  unit: 'Annual Economic Impact', sub: 'Brownsville EDC / Cameron County' },
@@ -936,7 +936,7 @@ export default function Analytics() {
         <div className="text-xs text-[#5C5C54] mb-4">Monthly truck crossings · BTS Border Crossing Entry Data</div>
 
         {/* Port stat cards */}
-        <div className="grid grid-cols-3 gap-3 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
           {[
             { port: 'Laredo',      color: '#1A6B72', label: 'Laredo' },
             { port: 'Hidalgo',     color: '#B07D1A', label: 'Hidalgo / McAllen' },
@@ -1012,7 +1012,7 @@ export default function Analytics() {
         <div className="text-xs text-[#5C5C54] mb-5">Urban Institute Education Data API · IPEDS completions 2022</div>
 
         {/* University cards */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
           {IPEDS_SCHOOLS.map((s, idx) => {
             const school  = ipeds?.[s.unitid]
             const colors  = ['#1A6B72', '#B07D1A', '#B8431E']
@@ -1082,28 +1082,28 @@ export default function Analytics() {
         ) : null}
       </div>
 
-      {/* ENERGY & LNG TRACKER (EIA) */}
+      {/* ENERGY & LNG TRACKER (FRED) */}
       <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mb-4">
         <div className="flex items-start justify-between mb-1">
           <div>
             <div className="font-semibold text-sm">Energy & LNG Tracker</div>
-            <div className="text-xs text-[#888780] mt-0.5">US LNG exports & Texas natural gas production · EIA</div>
+            <div className="text-xs text-[#888780] mt-0.5">US LNG exports & Texas natural gas production · FRED (DNGLNGUS2, TXNGGDPD)</div>
           </div>
           <div className="flex items-center gap-2">
             {status.eia === 'ok'      && <LiveBadge />}
             {status.eia === 'loading' && (
               <div className="flex items-center gap-1.5 text-xs text-[#5C5C54]">
                 <div className="w-3 h-3 border border-[#E2DDD6] border-t-[#1A6B72] rounded-full animate-spin"></div>
-                Loading EIA...
+                Loading Energy...
               </div>
             )}
             {status.eia === 'error' && (
-              <span className="text-xs text-[#888780]">EIA key not configured</span>
+              <span className="text-xs text-[#888780]">FRED data unavailable</span>
             )}
           </div>
         </div>
         <div className="text-xs text-[#5C5C54] mb-5">
-          U.S. Energy Information Administration · Monthly data
+          Federal Reserve Economic Data · FRED API via proxy · Monthly series
         </div>
 
         {/* Stat row */}
@@ -1190,14 +1190,11 @@ export default function Analytics() {
               {status.eia === 'loading' && (
                 <div className="w-4 h-4 border border-[#E2DDD6] border-t-[#1A6B72] rounded-full animate-spin"></div>
               )}
-              {status.eia === 'loading' && 'Loading EIA data...'}
+              {status.eia === 'loading' && 'Loading energy data...'}
               {status.eia === 'error'   && (
                 <>
-                  <span className="font-semibold text-[#5C5C54]">EIA proxy not configured</span>
-                  <span>Register for a free key at eia.gov/opendata, then:<br/>
-                    <code className="bg-[#E2DDD6] px-1 rounded">npx supabase secrets set EIA_API_KEY=&lt;key&gt;</code><br/>
-                    <code className="bg-[#E2DDD6] px-1 rounded">npx supabase functions deploy eia-proxy --no-verify-jwt</code>
-                  </span>
+                  <span className="font-semibold text-[#5C5C54]">FRED energy data unavailable</span>
+                  <span>Check that the fred-proxy edge function is deployed and the FRED_API_KEY secret is set.</span>
                 </>
               )}
             </div>

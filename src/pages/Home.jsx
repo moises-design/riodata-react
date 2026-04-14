@@ -18,7 +18,7 @@ export default function Home() {
         <div>
             {/* HERO */}
             <div className="grid grid-cols-1 md:grid-cols-2" style={{ minHeight: 'calc(100vh - 56px)' }}>
-                <div className="flex flex-col justify-center px-14 py-16">
+                <div className="flex flex-col justify-center px-6 sm:px-14 py-10 sm:py-16">
                     <div className="text-xs font-bold tracking-widest text-[#B8431E] uppercase mb-4 flex items-center gap-2">
                         <span className="w-4 h-px bg-[#B8431E]"></span>
                         South Texas + Northern Mexico · Free Regional Platform
@@ -38,7 +38,7 @@ export default function Home() {
                             View Regional Data
                         </Link>
                     </div>
-                    <div className="mt-10 pt-6 border-t border-[#E2DDD6] flex gap-8">
+                    <div className="mt-10 pt-6 border-t border-[#E2DDD6] grid grid-cols-2 sm:flex sm:gap-8 gap-4">
                         {[
                             ['2.1M', 'Population'],
                             ['$48B', 'Regional GDP'],
@@ -84,7 +84,7 @@ export default function Home() {
             </div>
 
             {/* STATS */}
-            <div className="px-14 py-20 bg-white">
+            <div className="px-6 sm:px-14 py-12 sm:py-20 bg-white">
                 <div className="text-xs font-bold tracking-widest text-[#B8431E] uppercase mb-3 flex items-center gap-2">
                     <span className="w-4 h-px bg-[#B8431E]"></span>The Opportunity
                 </div>
@@ -106,7 +106,7 @@ export default function Home() {
             </div>
 
             {/* PILLARS */}
-            <div className="px-14 py-20 bg-[#F7F3EE]">
+            <div className="px-6 sm:px-14 py-12 sm:py-20 bg-[#F7F3EE]">
                 <div className="text-xs font-bold tracking-widest text-[#B8431E] uppercase mb-3 flex items-center gap-2">
                     <span className="w-4 h-px bg-[#B8431E]"></span>What RioData Does
                 </div>
@@ -131,7 +131,7 @@ export default function Home() {
             </div>
 
             {/* CTA */}
-            <div className="px-14 py-20 bg-white">
+            <div className="px-6 sm:px-14 py-12 sm:py-20 bg-white">
                 <div className="max-w-2xl mx-auto text-center">
                     <h2 className="font-serif text-4xl font-bold tracking-tight text-[#0F0F0E] mb-4">Ready to build the region together?</h2>
                     <p className="text-[#5C5C54] mb-8">Join 500+ companies already on the platform. It's free, takes 8 minutes, and opens doors to real opportunities.</p>

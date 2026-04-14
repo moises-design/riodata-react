@@ -342,8 +342,8 @@ export default function Map() {
         </button>
 
         <button onClick={() => setSidebarOpen(o => !o)}
-          className="ml-auto md:hidden px-3 py-1 rounded-full text-xs font-medium border border-white/20 text-white/60">
-          ☰ List
+          className="ml-auto md:hidden px-3 py-1.5 rounded-full text-xs font-semibold border border-white/25 text-white/80 bg-white/10 active:bg-white/20 transition">
+          {sidebarOpen ? '✕ Close' : '☰ List'}
         </button>
 
         <div className="hidden sm:block text-xs text-white/40">{stats.total} companies</div>
@@ -375,8 +375,12 @@ export default function Map() {
           )}
         </div>
 
-        {/* Sidebar — desktop always, mobile toggle */}
-        <div className={`${sidebarOpen ? 'flex' : 'hidden'} md:flex w-72 bg-white border-l border-[#E2DDD6] flex-col absolute md:relative right-0 top-0 bottom-0 z-10 shadow-xl md:shadow-none`}>
+        {/* Sidebar — desktop side panel, mobile bottom sheet */}
+        <div className={`
+          ${sidebarOpen ? 'flex' : 'hidden'} md:flex flex-col bg-white border-[#E2DDD6] z-10
+          absolute bottom-0 left-0 right-0 h-64 border-t shadow-xl
+          md:relative md:bottom-auto md:left-auto md:right-auto md:h-auto md:w-72 md:border-t-0 md:border-l md:shadow-none
+        `}>
           <div className="p-3 border-b border-[#E2DDD6]">
             <div className="flex items-center justify-between mb-2">
               <div className="font-serif text-sm font-bold">Companies</div>

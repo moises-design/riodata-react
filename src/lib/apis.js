@@ -292,49 +292,28 @@ async function eiaFetch(path, queryString) {
   return json.response?.data ?? []
 }
 
-// Monthly US LNG export volumes — all terminals, last 12 months
+// Monthly US LNG export volumes via FRED (DNGLNGUS2) — replaces EIA direct API
 export async function fetchEIALNG() {
-  const ckey   = 'rd_eia_lng_v1'
+  const ckey   = 'rd_eia_lng_v2'
   const cached = getCache(ckey)
   if (cached) return cached
 
-  const rows = await eiaFetch(
-    'natural-gas/move/lngexports/data/',
-    'frequency=monthly&data[0]=value&sort[0][column]=period&sort[0][direction]=desc&length=48',
-  )
-
-  // EIA returns one row per terminal per period — aggregate to US monthly total.
-  // Exclude any summary row (duoarea === "NUS") to avoid double-counting if present.
-  const hasSummary = rows.some(r => r.duoarea === 'NUS')
-  const source     = hasSummary ? rows.filter(r => r.duoarea === 'NUS') : rows
-
-  const byPeriod = {}
-  source.forEach(r => {
-    if (!byPeriod[r.period]) byPeriod[r.period] = { period: r.period, value: 0, units: r.units ?? 'MMcf' }
-    byPeriod[r.period].value += (parseFloat(r.value) || 0)
-  })
-
-  const data = Object.values(byPeriod)
-    .sort((a, b) => b.period.localeCompare(a.period))
-    .slice(0, 12)
-    .reverse() // oldest → newest for chart
-
-  setCache(ckey, data, 24 * 60 * 60 * 1000) // 24 hours
+  const observations = await fetchFRED('DNGLNGUS2', 13)
+  // fetchFRED returns newest-first; reverse to oldest→newest for chart
+  const data = [...observations].reverse().map(o => ({ period: o.date, value: o.value }))
+  setCache(ckey, data, 24 * 60 * 60 * 1000)
   return data
 }
 
-// Monthly Texas dry natural gas production (MMcf)
+// Monthly Texas natural gas production via FRED (TXNGGDPD) — replaces EIA direct API
 export async function fetchEIATXGas() {
-  const ckey   = 'rd_eia_txgas_v1'
+  const ckey   = 'rd_eia_txgas_v2'
   const cached = getCache(ckey)
   if (cached) return cached
 
-  const rows = await eiaFetch(
-    'natural-gas/prod/sum/data/',
-    'frequency=monthly&data[0]=value&facets[duoarea][]=STX&sort[0][column]=period&sort[0][direction]=desc&length=12',
-  )
-
-  const data = rows.map(r => ({ period: r.period, value: parseFloat(r.value) || 0, units: r.units ?? 'MMcf' }))
+  const observations = await fetchFRED('TXNGGDPD', 13)
+  // Keep newest-first to match Analytics.jsx txgas[0] = latest
+  const data = observations.map(o => ({ period: o.date, value: o.value }))
   setCache(ckey, data, 24 * 60 * 60 * 1000)
   return data
 }
@@ -617,25 +596,35 @@ export async function fetchUSGSWater() {
   return data
 }
 
+// Starbase (Boca Chica, TX) launchpad ID in SpaceX API v5
+const STARBASE_LAUNCHPAD = '5e9e4502f509094188566f88'
+
 // ─── SpaceX Launches ──────────────────────────────────────────────────────────
 export async function fetchSpaceXLaunches() {
-  const ckey = 'rd_spacex_launches_v1'
+  const ckey = 'rd_spacex_launches_v2'
   const cached = getCache(ckey)
   if (cached) return cached
 
   const [upRes, pastRes] = await Promise.allSettled([
     fetch('https://api.spacexdata.com/v5/launches/upcoming'),
-    fetch('https://api.spacexdata.com/v5/launches/past?limit=10'),
+    fetch('https://api.spacexdata.com/v5/launches/past'),
   ])
 
-  const upcoming = upRes.status === 'fulfilled' && upRes.value.ok
+  const allUpcoming = upRes.status === 'fulfilled' && upRes.value.ok
     ? await upRes.value.json()
     : []
-  const past = pastRes.status === 'fulfilled' && pastRes.value.ok
+  const allPast = pastRes.status === 'fulfilled' && pastRes.value.ok
     ? await pastRes.value.json()
     : []
 
-  const data = { upcoming, past: past.reverse().slice(-10) }
+  // Filter for Starbase / Boca Chica only
+  const upcoming = allUpcoming.filter(l => l.launchpad === STARBASE_LAUNCHPAD)
+  // API returns oldest-first; slice(-10) gives the 10 most recent Starbase launches
+  const past = allPast.filter(l => l.launchpad === STARBASE_LAUNCHPAD).slice(-10)
+
+  console.log(`[SpaceX] Starbase upcoming: ${upcoming.length}, past: ${past.length}`)
+
+  const data = { upcoming, past }
   setCache(ckey, data, 60 * 60 * 1000) // 1 hour
   return data
 }
@@ -708,6 +697,9 @@ export async function fetchDallasFed() {
   const ckey = 'rd_dallasfed_v1'
   const cached = getCache(ckey)
   if (cached) return cached
+
+  console.log('[DallasFed] fetching FRED series:', DALLAS_FRED_SERIES)
+  console.log('[DallasFed] using fred-proxy:', FRED_PROXY)
 
   // Fetch all four FRED series through our proxy (reliable)
   const fredResults = await Promise.allSettled(

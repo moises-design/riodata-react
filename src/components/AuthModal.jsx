@@ -89,10 +89,11 @@ export default function AuthModal({ initialTab = 'signin', onClose }) {
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
       onMouseDown={e => { if (e.target === overlayRef.current) onClose() }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-[#E2DDD6] overflow-hidden">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm border border-[#E2DDD6] overflow-hidden pb-safe"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
 
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4">
