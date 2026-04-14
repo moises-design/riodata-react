@@ -1,8 +1,13 @@
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase'
+
 // ─── API keys ─────────────────────────────────────────────────────────────────
+// FRED key lives server-side only (Supabase secret FRED_API_KEY).
+// Census key is a public API key with no sensitive scope.
 export const KEYS = {
-  fred:   '8bc60b7e8d1123fe20e4a04ca79e5e7b',
   census: '543f503e7e8366c26065cdd212d9f7fd37a5a2e1',
 }
+
+const FRED_PROXY = `${SUPABASE_URL}/functions/v1/fred-proxy`
 
 // ─── Generic localStorage cache ───────────────────────────────────────────────
 function getCache(key) {
@@ -34,10 +39,20 @@ export async function fetchFRED(seriesId, limit = 8) {
   const ckey = `rd_fred_${seriesId}`
   const cached = getCache(ckey)
   if (cached) return cached
-  const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${KEYS.fred}&file_type=json&sort_order=desc&limit=${limit}`
-  const res = await fetch(url)
+
+  const url = new URL(FRED_PROXY)
+  url.searchParams.set('series_id', seriesId)
+  url.searchParams.set('limit', String(limit))
+  url.searchParams.set('sort_order', 'desc')
+
+  const res = await fetch(url.toString(), {
+    headers: {
+      'apikey':        SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+  })
   const json = await res.json()
-  if (!json.observations) throw new Error(`FRED: ${seriesId}`)
+  if (!json.observations) throw new Error(`FRED proxy: ${seriesId} — ${json.error ?? 'no observations'}`)
   const data = json.observations
     .filter(o => o.value !== '.')
     .map(o => ({ date: o.date, value: parseFloat(o.value) }))
