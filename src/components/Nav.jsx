@@ -100,7 +100,7 @@ export default function Nav() {
                     className="flex items-center gap-2.5 px-4 py-3 text-sm text-[#0F0F0E] hover:bg-[#F7F3EE] transition">
                     <span className="text-base">📊</span> Dashboard
                   </Link>
-                  <Link to="/dashboard"
+                  <Link to="/profile"
                     onClick={() => setDropOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-3 text-sm text-[#0F0F0E] hover:bg-[#F7F3EE] transition border-t border-[#F0EDE8]">
                     <span className="text-base">✏️</span> Edit Profile

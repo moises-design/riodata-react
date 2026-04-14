@@ -8,6 +8,7 @@ import Workforce from './pages/Workforce'
 import About from './pages/About'
 import Onboarding from './pages/Onboarding'
 import Map from './pages/Map'
+import Profile from './pages/Profile'
 import Nav from './components/Nav'
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/map" element={<Map />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </div>
   )

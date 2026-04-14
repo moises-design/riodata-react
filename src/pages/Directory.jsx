@@ -1,17 +1,30 @@
 import { useEffect, useState } from 'react'
 import { sb } from '../lib/supabase'
+import { fetchSavedIds, saveCompany, unsaveCompany, logActivity } from '../lib/db'
 
 const COLORS = ['#E3F0F1,#1A6B72','#F2E8E3,#B8431E','#FBF4E3,#B07D1A','#E4F0EA,#2A6B43','#EDE8F8,#5B3FA6']
 
 export default function Directory() {
-    const [companies, setCompanies] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [search, setSearch] = useState('')
-    const [sector, setSector] = useState('')
-    const [country, setCountry] = useState('')
-    const [selected, setSelected] = useState(null)
+    const [companies,  setCompanies]  = useState([])
+    const [loading,    setLoading]    = useState(true)
+    const [search,     setSearch]     = useState('')
+    const [sector,     setSector]     = useState('')
+    const [country,    setCountry]    = useState('')
+    const [selected,   setSelected]   = useState(null)
+    const [savedIds,   setSavedIds]   = useState(new Set())
+    const [userId,     setUserId]     = useState(null)
+    const [savingId,   setSavingId]   = useState(null)   // id currently being toggled
 
-    useEffect(() => { loadCompanies() }, [])
+    // Load auth + saved IDs on mount
+    useEffect(() => {
+        sb.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user) {
+                setUserId(session.user.id)
+                fetchSavedIds(session.user.id).then(setSavedIds)
+            }
+        })
+        loadCompanies()
+    }, [])
 
     async function loadCompanies(q='', s='', c='') {
         setLoading(true)
@@ -25,6 +38,31 @@ export default function Directory() {
     }
 
     function doSearch() { loadCompanies(search, sector, country) }
+
+    async function toggleSave(e, companyId, companyName) {
+        e.stopPropagation()
+        if (!userId) return   // user not signed in — could open auth modal here
+        if (savingId === companyId) return
+        setSavingId(companyId)
+        const isSaved = savedIds.has(companyId)
+        if (isSaved) {
+            await unsaveCompany(userId, companyId)
+            setSavedIds(prev => { const s = new Set(prev); s.delete(companyId); return s })
+            logActivity(userId, 'unsaved_company', companyName, companyId)
+        } else {
+            const ok = await saveCompany(userId, companyId)
+            if (ok) {
+                setSavedIds(prev => new Set([...prev, companyId]))
+                logActivity(userId, 'saved_company', companyName, companyId)
+            }
+        }
+        setSavingId(null)
+    }
+
+    function openCompany(c) {
+        setSelected(c)
+        if (userId) logActivity(userId, 'viewed_company', c.legal_name, c.id)
+    }
 
     return (
         <div>
@@ -72,10 +110,11 @@ export default function Directory() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        {companies.map((c,i) => {
+                        {companies.map((c) => {
                             const [bg,fg] = COLORS[c.legal_name.charCodeAt(0)%COLORS.length].split(',')
+                            const isSaved = savedIds.has(c.id)
                             return (
-                                <div key={c.id} onClick={()=>setSelected(c)}
+                                <div key={c.id} onClick={()=>openCompany(c)}
                                     className="bg-white border border-[#E2DDD6] rounded-xl p-5 cursor-pointer hover:border-[#1A6B72] hover:-translate-y-0.5 hover:shadow-md transition-all">
                                     <div className="flex justify-between items-start mb-3">
                                         <div className="flex gap-2.5 items-start">
@@ -86,7 +125,19 @@ export default function Directory() {
                                                 <div className="text-xs text-[#5C5C54] mt-0.5">📍 {c.city}{c.state_province?', '+c.state_province:''} {c.country==='MX'?'🇲🇽':'🇺🇸'}</div>
                                             </div>
                                         </div>
-                                        <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${c.ready_to_work?'bg-green-600 shadow-[0_0_0_3px_rgba(42,107,67,.15)]':'bg-[#E2DDD6]'}`}></div>
+                                        <div className="flex items-center gap-2">
+                                            {userId && (
+                                                <button
+                                                    onClick={e=>toggleSave(e, c.id, c.legal_name)}
+                                                    disabled={savingId === c.id}
+                                                    className={`text-lg leading-none transition-transform hover:scale-110 ${isSaved ? 'text-[#1A6B72]' : 'text-[#D4D0CA] hover:text-[#1A6B72]'}`}
+                                                    title={isSaved ? 'Remove bookmark' : 'Save company'}
+                                                >
+                                                    {isSaved ? '🔖' : '🔖'}
+                                                </button>
+                                            )}
+                                            <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${c.ready_to_work?'bg-green-600 shadow-[0_0_0_3px_rgba(42,107,67,.15)]':'bg-[#E2DDD6]'}`}></div>
+                                        </div>
                                     </div>
                                     {c.description && <p className="text-xs text-[#5C5C54] leading-relaxed mb-3 line-clamp-2">{c.description}</p>}
                                     <div className="flex flex-wrap gap-1 mb-3">
@@ -109,11 +160,26 @@ export default function Directory() {
             {/* COMPANY MODAL */}
             {selected && (
                 <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={()=>setSelected(null)}>
-                    <div className="bg-white rounded-2xl p-8 max-w-lg w-full max-h-[85vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
-                        <button onClick={()=>setSelected(null)} className="absolute top-4 right-4 w-7 h-7 rounded-full border border-[#E2DDD6] flex items-center justify-center text-[#5C5C54] hover:bg-[#F7F3EE]">✕</button>
-                        <div className="text-xs text-[#1A6B72] font-bold uppercase tracking-wider mb-2">Company Profile</div>
-                        <h2 className="font-serif text-2xl font-bold mb-1">{selected.legal_name}</h2>
-                        <p className="text-sm text-[#5C5C54] mb-4">📍 {selected.city}{selected.state_province?', '+selected.state_province:''} {selected.country==='MX'?'🇲🇽':'🇺🇸'}</p>
+                    <div className="bg-white rounded-2xl p-8 max-w-lg w-full max-h-[85vh] overflow-y-auto relative" onClick={e=>e.stopPropagation()}>
+                        <div className="flex items-start justify-between mb-4">
+                            <div>
+                                <div className="text-xs text-[#1A6B72] font-bold uppercase tracking-wider mb-1">Company Profile</div>
+                                <h2 className="font-serif text-2xl font-bold">{selected.legal_name}</h2>
+                                <p className="text-sm text-[#5C5C54] mt-1">📍 {selected.city}{selected.state_province?', '+selected.state_province:''} {selected.country==='MX'?'🇲🇽':'🇺🇸'}</p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                {userId && (
+                                    <button
+                                        onClick={e=>toggleSave(e, selected.id, selected.legal_name)}
+                                        disabled={savingId === selected.id}
+                                        className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition ${savedIds.has(selected.id) ? 'bg-[#E3F0F1] border-[#B8D8DC] text-[#1A6B72]' : 'border-[#E2DDD6] text-[#5C5C54] hover:border-[#1A6B72] hover:text-[#1A6B72]'}`}
+                                    >
+                                        {savedIds.has(selected.id) ? '🔖 Saved' : '🔖 Save'}
+                                    </button>
+                                )}
+                                <button onClick={()=>setSelected(null)} className="w-7 h-7 rounded-full border border-[#E2DDD6] flex items-center justify-center text-[#5C5C54] hover:bg-[#F7F3EE]">✕</button>
+                            </div>
+                        </div>
                         <div className="flex gap-2 flex-wrap mb-4">
                             {selected.ready_to_work&&<span className="px-3 py-1 bg-[#E4F0EA] text-[#2A6B43] rounded-full text-xs font-bold">✅ Ready to Work</span>}
                             <span className="px-3 py-1 bg-[#E3F0F1] text-[#1A6B72] rounded-full text-xs font-bold">{selected.sector}</span>
