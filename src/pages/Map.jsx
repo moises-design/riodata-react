@@ -5,7 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { sb } from '../lib/supabase'
 import { fetchBorderWaitTimes } from '../lib/apis'
 
-mapboxgl.accessToken = 'pk.eyJ1IjoibW9pc2VzdmlzdGF0ZWNoIiwiYSI6ImNtbnhsZ3V1aDAzbTUycnBxamNicWdqNTMifQ.IRiCCZH2dXnwWuhJK-QBnQ'
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 
 // ─── Static data ───────────────────────────────────────────────────────────────
 

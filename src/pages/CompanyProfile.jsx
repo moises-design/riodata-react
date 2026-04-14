@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { sb } from '../lib/supabase'
 import { fetchSavedIds, saveCompany, unsaveCompany, logActivity } from '../lib/db'
 
-const MAPBOX_TOKEN = 'pk.eyJ1IjoibW9pc2VzdmlzdGF0ZWNoIiwiYSI6ImNtbnhsZ3V1aDAzbTUycnBxamNicWdqNTMifQ.IRiCCZH2dXnwWuhJK-QBnQ'
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN
 
 const CITY_COORDS = {
   'Laredo':[-99.5075,27.5036],'McAllen':[-98.2301,26.2034],'Edinburg':[-98.1633,26.3017],

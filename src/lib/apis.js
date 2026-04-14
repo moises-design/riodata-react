@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase'
 // FRED key lives server-side only (Supabase secret FRED_API_KEY).
 // Census key is a public API key with no sensitive scope.
 export const KEYS = {
-  census: '543f503e7e8366c26065cdd212d9f7fd37a5a2e1',
+  census: import.meta.env.VITE_CENSUS_API_KEY,
 }
 
 const FRED_PROXY = `${SUPABASE_URL}/functions/v1/fred-proxy`
