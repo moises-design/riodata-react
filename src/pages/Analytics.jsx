@@ -193,6 +193,8 @@ export default function Analytics() {
             Millions chained 2017$ · FRED RGMP series
             {totalGDP && ` · Combined ${fmtGDP(totalGDP)}`}
           </div>
+          {/* debug: log fred state every render so we can see what keys arrived */}
+          {fred && console.log('[Analytics] fred state keys:', Object.keys(fred), '| mcallen_gdp:', fred.mcallen_gdp?.length ?? 'undefined', 'obs | gdpTrend length:', gdpTrend.length)}
           {gdpTrend.length > 0 ? (
             <>
               <div className="h-36 flex items-end gap-2.5">
@@ -223,9 +225,13 @@ export default function Analytics() {
             </>
           ) : (
             <div className="h-36 flex items-center justify-center bg-[#F7F3EE] rounded-lg">
-              <div className="flex items-center gap-2 text-xs text-[#888780]">
+              <div className="flex flex-col items-center gap-2 text-xs text-[#888780]">
                 {status.fred === 'loading' && <div className="w-4 h-4 border border-[#E2DDD6] border-t-[#1A6B72] rounded-full animate-spin"></div>}
-                {status.fred === 'loading' ? 'Loading FRED data...' : 'FRED offline · chart unavailable'}
+                <span>
+                  {status.fred === 'loading' && 'Loading FRED data...'}
+                  {status.fred === 'error'   && 'FRED request failed · see console'}
+                  {status.fred === 'ok'      && 'GDP series returned no data · check RGMP series IDs in console'}
+                </span>
               </div>
             </div>
           )}

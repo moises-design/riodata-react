@@ -38,21 +38,38 @@ export const FRED_SERIES = {
 export async function fetchFRED(seriesId, limit = 8) {
   const ckey = `rd_fred_${seriesId}`
   const cached = getCache(ckey)
-  if (cached) return cached
+  if (cached) {
+    console.log(`[FRED] cache hit: ${seriesId} (${cached.length} obs)`)
+    return cached
+  }
 
   const url = new URL(FRED_PROXY)
   url.searchParams.set('series_id', seriesId)
   url.searchParams.set('limit', String(limit))
   url.searchParams.set('sort_order', 'desc')
 
+  console.log(`[FRED] fetching: ${seriesId}`)
   // fred-proxy is deployed with --no-verify-jwt (public proxy).
   // The FRED API key stays server-side as a Supabase secret.
   const res = await fetch(url.toString())
   const json = await res.json()
-  if (!json.observations) throw new Error(`FRED proxy: ${seriesId} — ${json.error ?? 'no observations'}`)
+  console.log(`[FRED] response for ${seriesId} (HTTP ${res.status}):`, json)
+
+  if (!json.observations) {
+    console.error(`[FRED] no observations for ${seriesId}:`, json)
+    throw new Error(`FRED proxy: ${seriesId} — ${json.error_message ?? json.error ?? 'no observations field'}`)
+  }
+
   const data = json.observations
     .filter(o => o.value !== '.')
     .map(o => ({ date: o.date, value: parseFloat(o.value) }))
+  console.log(`[FRED] parsed ${seriesId}: ${data.length} valid observations, latest: ${data[0]?.date} = ${data[0]?.value}`)
+
+  if (!data.length) {
+    console.warn(`[FRED] ${seriesId} returned 0 non-missing observations — series may not exist or have no data`)
+    throw new Error(`FRED proxy: ${seriesId} — 0 valid observations`)
+  }
+
   setCache(ckey, data, 4 * 60 * 60 * 1000) // 4 hours
   return data
 }
@@ -60,12 +77,27 @@ export async function fetchFRED(seriesId, limit = 8) {
 export async function fetchFREDRegional() {
   const ckey = 'rd_fred_regional_v2'
   const cached = getCache(ckey)
-  if (cached) return cached
+  if (cached) {
+    console.log('[FRED] regional cache hit, keys:', Object.keys(cached))
+    return cached
+  }
+
   const results = await Promise.allSettled(
     Object.entries(FRED_SERIES).map(([k, id]) => fetchFRED(id, 8).then(d => [k, d]))
   )
+
   const mapped = {}
-  results.forEach(r => { if (r.status === 'fulfilled') { const [k, d] = r.value; mapped[k] = d } })
+  results.forEach(r => {
+    if (r.status === 'fulfilled') {
+      const [k, d] = r.value
+      mapped[k] = d
+    } else {
+      console.error('[FRED] series failed:', r.reason?.message)
+    }
+  })
+
+  console.log('[FRED] fetchFREDRegional result — succeeded:', Object.keys(mapped), '| failed:', results.filter(r => r.status === 'rejected').length)
+
   if (!Object.keys(mapped).length) throw new Error('All FRED series failed')
   setCache(ckey, mapped, 4 * 60 * 60 * 1000)
   return mapped
