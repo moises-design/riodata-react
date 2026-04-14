@@ -41,7 +41,7 @@ export default function Profile() {
   }, [])
 
   async function loadProfile(userId) {
-    const { data } = await sb.from('profiles').select('*').eq('id', userId).single()
+    const { data } = await sb.from('profiles').select('*').eq('id', userId).maybeSingle()
     if (data) {
       setForm({
         full_name:    data.full_name    || '',

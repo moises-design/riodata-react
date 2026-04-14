@@ -47,7 +47,7 @@ export default function Onboarding() {
                 cert_hubzone: form.cert_hubzone,
                 cert_immex: form.cert_immex,
                 status: 'pending',
-                user_id: authData.user?.id
+                submitted_by: authData.user?.id
             })
             if (compError) throw compError
             setStep(4)

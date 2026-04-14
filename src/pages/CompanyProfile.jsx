@@ -54,7 +54,7 @@ export default function CompanyProfile() {
     async function load() {
       setLoading(true)
       setError(null)
-      const { data, error: err } = await sb.from('companies').select('*').eq('id', id).single()
+      const { data, error: err } = await sb.from('companies').select('*').eq('id', id).maybeSingle()
       if (err || !data) { setError('Company not found.'); setLoading(false); return }
       setCompany(data)
 

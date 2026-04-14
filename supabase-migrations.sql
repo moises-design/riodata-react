@@ -30,6 +30,10 @@ CREATE TABLE IF NOT EXISTS profiles (
 );
 
 -- Add any columns that may be missing on existing deployments
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS phone          TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS sector         TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS city           TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS bio            TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS title          TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_url     TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS company_name   TEXT;
@@ -176,6 +180,7 @@ ON CONFLICT (id) DO UPDATE SET public = TRUE;
 -- Storage policies
 DROP POLICY IF EXISTS "avatars_authenticated_upload" ON storage.objects;
 DROP POLICY IF EXISTS "avatars_public_read"          ON storage.objects;
+DROP POLICY IF EXISTS "avatars_owner_update"         ON storage.objects;
 DROP POLICY IF EXISTS "avatars_owner_delete"         ON storage.objects;
 
 -- Public read access (avatars are shown to everyone)
@@ -287,36 +292,45 @@ CREATE TRIGGER profiles_set_updated_at
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 12. COMPANIES TABLE
+-- Live schema already exists with: submitted_by, legal_name, sector, city,
+--   state_province, country, contact_*, lat, lng, cert_*, status, ready_to_work
+-- We only add columns that the app code expects but may be missing.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS companies (
-  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  legal_name   TEXT        NOT NULL,
-  sector       TEXT,
-  city         TEXT,
-  state        TEXT,
-  country      TEXT        DEFAULT 'US',
-  description  TEXT,
-  website      TEXT,
-  phone        TEXT,
-  email        TEXT,
-  address      TEXT,
-  latitude     NUMERIC,
-  longitude    NUMERIC,
-  status       TEXT        DEFAULT 'active',
-  employees    TEXT,
-  founded_year INT,
-  ready_to_work BOOLEAN    DEFAULT FALSE,
-  cert_sam     BOOLEAN     DEFAULT FALSE,
-  cert_hubzone BOOLEAN     DEFAULT FALSE,
-  cert_immex   BOOLEAN     DEFAULT FALSE,
-  services     TEXT,
-  owner_id     UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
-  created_at   TIMESTAMPTZ DEFAULT NOW()
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  legal_name      TEXT        NOT NULL,
+  sector          TEXT,
+  city            TEXT,
+  state_province  TEXT,
+  country         TEXT        DEFAULT 'US',
+  description     TEXT,
+  website         TEXT,
+  contact_phone   TEXT,
+  contact_email   TEXT,
+  contact_name    TEXT,
+  lat             NUMERIC,
+  lng             NUMERIC,
+  status          TEXT        DEFAULT 'active',
+  ready_to_work   BOOLEAN     DEFAULT FALSE,
+  cert_sam        BOOLEAN     DEFAULT FALSE,
+  cert_hubzone    BOOLEAN     DEFAULT FALSE,
+  cert_immex      BOOLEAN     DEFAULT FALSE,
+  services        TEXT[],
+  submitted_by    UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Add app-expected columns that may not exist on older deployments
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS submitted_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS sector        TEXT;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS status        TEXT DEFAULT 'active';
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS ready_to_work BOOLEAN DEFAULT FALSE;
 
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 
+-- Add an open public-read policy (existing policies may restrict to status=active only)
 DROP POLICY IF EXISTS "companies_public_read"  ON companies;
 DROP POLICY IF EXISTS "companies_owner_insert" ON companies;
 DROP POLICY IF EXISTS "companies_owner_update" ON companies;
@@ -331,35 +345,44 @@ CREATE POLICY "companies_owner_insert"
 
 CREATE POLICY "companies_owner_update"
   ON companies FOR UPDATE
-  USING (auth.uid() = owner_id);
+  USING (auth.uid() = submitted_by);
 
-CREATE INDEX IF NOT EXISTS idx_companies_sector  ON companies(sector);
-CREATE INDEX IF NOT EXISTS idx_companies_city    ON companies(city);
-CREATE INDEX IF NOT EXISTS idx_companies_country ON companies(country);
-CREATE INDEX IF NOT EXISTS idx_companies_status  ON companies(status);
-CREATE INDEX IF NOT EXISTS idx_companies_owner   ON companies(owner_id);
+CREATE INDEX IF NOT EXISTS idx_companies_sector       ON companies(sector);
+CREATE INDEX IF NOT EXISTS idx_companies_city         ON companies(city);
+CREATE INDEX IF NOT EXISTS idx_companies_country      ON companies(country);
+CREATE INDEX IF NOT EXISTS idx_companies_status       ON companies(status);
+CREATE INDEX IF NOT EXISTS idx_companies_submitted_by ON companies(submitted_by);
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 13. PROJECTS TABLE
+-- Live schema already exists with: posted_by, title, project_type, description,
+--   company_name, city, state_province, country, lat, lng, total_value,
+--   worker_count, required_certs, required_services, deadline, contact_email, status
+-- We add columns that Opportunities.jsx + Dashboard.jsx expect.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS projects (
-  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  title       TEXT        NOT NULL,
-  description TEXT,
-  sector      TEXT,
-  city        TEXT,
-  state       TEXT,
-  budget      TEXT,
-  value_usd   NUMERIC,
-  status      TEXT        DEFAULT 'active',
-  location    TEXT,
-  tags        TEXT[]      DEFAULT '{}',
-  company_id  UUID        REFERENCES companies(id) ON DELETE SET NULL,
-  owner_id    UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
-  created_at  TIMESTAMPTZ DEFAULT NOW()
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  title        TEXT        NOT NULL,
+  description  TEXT,
+  sector       TEXT,
+  city         TEXT,
+  state        TEXT,
+  budget       TEXT,
+  status       TEXT        DEFAULT 'active',
+  location     TEXT,
+  tags         TEXT[]      DEFAULT '{}',
+  posted_by    UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at   TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Add app-expected columns that may not exist on older deployments
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS sector   TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS budget   TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS location TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS tags     TEXT[] DEFAULT '{}';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS posted_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
 
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 
@@ -377,11 +400,11 @@ CREATE POLICY "projects_owner_insert"
 
 CREATE POLICY "projects_owner_update"
   ON projects FOR UPDATE
-  USING (auth.uid() = owner_id);
+  USING (auth.uid() = posted_by);
 
-CREATE INDEX IF NOT EXISTS idx_projects_sector ON projects(sector);
-CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
-CREATE INDEX IF NOT EXISTS idx_projects_owner  ON projects(owner_id);
+CREATE INDEX IF NOT EXISTS idx_projects_sector    ON projects(sector);
+CREATE INDEX IF NOT EXISTS idx_projects_status    ON projects(status);
+CREATE INDEX IF NOT EXISTS idx_projects_posted_by ON projects(posted_by);
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
