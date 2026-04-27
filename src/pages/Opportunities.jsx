@@ -20,6 +20,7 @@ const DEMO = [
     { id: 4, title: 'Rio Grande Valley Data Center',     sector: 'Technology',  budget: '$180M', location: 'McAllen, TX',      status: 'Open', description: 'New data center construction seeking local contractors for civil work, electrical, and mechanical systems.',          tags: ['Civil','Electrical','HVAC'] },
     { id: 5, title: 'UTRGV Medical School Construction', sector: 'Healthcare',  budget: '$95M',  location: 'Edinburg, TX',     status: 'Open', description: 'New medical education facility. Seeking DBE/HUBZone certified subcontractors for multiple trades.',                   tags: ['Construction','Plumbing','Electrical'] },
     { id: 6, title: 'Nuevo Laredo Industrial Park',      sector: 'Manufacturing',budget: '$65M', location: 'Nuevo Laredo, TAM',status: 'Open', description: 'New maquiladora industrial park seeking construction and infrastructure contractors on both sides of border.',       tags: ['Site Development','Construction','Utilities'] },
+    { id: 7, title: 'SPI $1B Desalination Plant',        sector: 'Construction', budget: '$1B',  location: 'South Padre Island, TX', status: 'Open', description: '117-acre, 100M gallon/day desalination facility on South Padre Island. Land secured April 2026. 50 direct jobs. Seeking civil, mechanical, electrical, and water treatment contractors.', tags: ['Civil','Mechanical','Water Treatment','Electrical'] },
 ]
 
 export default function Opportunities() {

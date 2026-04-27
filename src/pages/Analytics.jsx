@@ -406,7 +406,7 @@ export default function Analytics() {
             live:  false,
           },
           {
-            val:   '$9.3B',
+            val:   '$10.3B',
             label: 'Active Pipeline',
             sub:   'Projects & opportunities',
             live:  false,
@@ -896,16 +896,17 @@ export default function Analytics() {
         {/* Pipeline by sector (static) */}
         <div className="bg-white border border-[#E2DDD6] rounded-xl p-6">
           <div className="font-semibold text-sm mb-1">Pipeline by Sector</div>
-          <div className="text-xs text-[#5C5C54] mb-4">$9.3B total active project value</div>
+          <div className="text-xs text-[#5C5C54] mb-4">$10.3B total active project value</div>
           {[
             ['Energy / LNG',    4200, '#B8431E'],
             ['Construction',    2800, '#1A6B72'],
             ['Data Centers',    1400, '#B07D1A'],
+            ['SPI Desalination',1000, '#1A5CB8'],
             ['Industrial',       880, '#2A6B43'],
             ['Other',             20, '#888780'],
           ].map(([label, val, color]) => (
             <div key={label} className="flex items-center gap-3 mb-2">
-              <div className="text-xs text-[#5C5C54] w-24 flex-shrink-0">{label}</div>
+              <div className="text-xs text-[#5C5C54] w-28 flex-shrink-0">{label}</div>
               <div className="flex-1 h-5 bg-[#F7F3EE] rounded overflow-hidden">
                 <div className="h-full rounded" style={{ width: `${(val / 4200) * 100}%`, background: color }}></div>
               </div>
