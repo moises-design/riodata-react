@@ -453,7 +453,58 @@ function CertificationsTab() {
 
 // ─── EDUCATION PIPELINE TAB ────────────────────────────────────────────────────
 
+// TEA district data — Texas Education Agency public accountability reports
+const TEA_DISTRICTS = [
+  { name: 'Edinburg CISD',    county: 'Hidalgo',  enrollment: 32_000, gradRate: 88, collegeReady: 64 },
+  { name: 'McAllen ISD',      county: 'Hidalgo',  enrollment: 23_000, gradRate: 93, collegeReady: 71 },
+  { name: 'Brownsville ISD',  county: 'Cameron',  enrollment: 46_000, gradRate: 86, collegeReady: 62 },
+  { name: 'Laredo ISD',       county: 'Webb',     enrollment: 24_000, gradRate: 87, collegeReady: 58 },
+  { name: 'United ISD',       county: 'Webb',     enrollment: 42_000, gradRate: 91, collegeReady: 68 },
+  { name: 'PSJA ISD',         county: 'Hidalgo',  enrollment: 32_000, gradRate: 89, collegeReady: 65 },
+]
+
+// Census ACS 5-year — % population 25+ with bachelor's degree or higher
+const ATTAINMENT = [
+  { name: "Hidalgo Co.", pct: 15, color: '#1A6B72', isRGV: true  },
+  { name: "Cameron Co.", pct: 17, color: '#B07D1A', isRGV: true  },
+  { name: "Webb Co.",    pct: 18, color: '#B8431E', isRGV: true  },
+  { name: "Texas",       pct: 32, color: '#5C5C54', isRGV: false },
+  { name: "US",          pct: 35, color: '#888780', isRGV: false },
+]
+
+// College Scorecard hardcoded fallback — DEMO_KEY is rate-limited; fallback from 2022 data
+const SCORECARD_FALLBACK = [
+  { id: 228769, name: 'UTRGV',              size: 29_200, gradRate4yr: 0.40, medianDebt: 18_500, earnings10yr: 42_000 },
+  { id: 228431, name: 'TAMIU',              size:  8_100, gradRate4yr: 0.38, medianDebt: 16_000, earnings10yr: 41_000 },
+  { id: 372423, name: 'South Texas College',size: 34_000, gradRate4yr: null, gradRateLT4yr: 0.22, medianDebt: 8_200, earnings10yr: 35_000 },
+]
+
 function EducationPipelineTab() {
+  const [scorecard,       setScorecard]       = useState(null)
+  const [scorecardStatus, setScorecardStatus] = useState('loading')
+
+  useEffect(() => {
+    const ids    = '228769,228431,372423'
+    const fields = [
+      'id', 'school.name',
+      'latest.student.size',
+      'latest.completion.completion_rate_4yr_150nt',
+      'latest.completion.completion_rate_less_than_4yr_150nt',
+      'latest.aid.median_debt.completers.overall',
+      'latest.earnings.10_yrs_after_entry.median',
+    ].join(',')
+    fetch(`https://api.collegescorecard.ed.gov/v1/schools?id=${ids}&fields=${fields}&api_key=DEMO_KEY`)
+      .then(r => r.json())
+      .then(d => {
+        const results = d.results || []
+        if (results.length) { setScorecard(results); setScorecardStatus('ok') }
+        else setScorecardStatus('error')
+      })
+      .catch(() => setScorecardStatus('error'))
+  }, [])
+
+  const scorecardRows = scorecard ?? SCORECARD_FALLBACK
+
   const schools = [
     { school: 'UTRGV', location: 'Edinburg / Brownsville', type: 'R2 University', grads: '8,200', programs: ['Engineering', 'Computer Science', 'Business', 'Healthcare', 'Biomedical'], match: '72%', matchColor: 'text-[#B07D1A]', note: 'Only R2 research university in deep South Texas' },
     { school: 'Laredo College', location: 'Laredo, TX', type: 'Community College', grads: '2,100', programs: ['CDL Training', 'Welding', 'HVAC', 'Nursing', 'Customs Ops'], match: '89%', matchColor: 'text-[#2A6B43]', note: 'Highest employer match rate in the region' },
@@ -548,6 +599,118 @@ function EducationPipelineTab() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── Census Education Attainment ── */}
+      <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mt-4">
+        <div className="font-semibold text-sm mb-1">Education Attainment — Bachelor's Degree or Higher</div>
+        <div className="text-xs text-[#5C5C54] mb-5">% of population 25+ · Census ACS 5-year estimates</div>
+        <div className="space-y-3">
+          {ATTAINMENT.map(a => (
+            <div key={a.name} className="flex items-center gap-3">
+              <div className={`text-xs w-24 flex-shrink-0 font-medium ${a.isRGV ? 'text-[#0F0F0E]' : 'text-[#888780]'}`}>{a.name}</div>
+              <div className="flex-1 h-6 bg-[#F7F3EE] rounded overflow-hidden">
+                <div className="h-full rounded flex items-center pl-2 transition-all"
+                  style={{ width: `${(a.pct / 35) * 100}%`, background: a.color }}>
+                  <span className="text-[10px] font-bold text-white">{a.pct}%</span>
+                </div>
+              </div>
+              {a.isRGV && (
+                <div className="text-[10px] text-[#B8431E] font-semibold w-16 text-right">
+                  {35 - a.pct}pp below US
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <p className="text-[10px] text-[#A8A49E] mt-3">Source: US Census Bureau ACS 5-Year Estimates · Table B15003</p>
+      </div>
+
+      {/* ── TEA District Data ── */}
+      <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mt-4">
+        <div className="font-semibold text-sm mb-1">K-12 District Data — Texas Education Agency</div>
+        <div className="text-xs text-[#5C5C54] mb-4">Enrollment, graduation rate, and college-readiness · TEA Accountability Reports</div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#E2DDD6]">
+                {['District', 'County', 'Enrollment', 'Grad Rate', 'College-Ready'].map(h => (
+                  <th key={h} className="text-left py-2 pr-4 text-xs font-bold uppercase tracking-wider text-[#5C5C54]">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {TEA_DISTRICTS.map(d => (
+                <tr key={d.name} className="border-b border-[#F7F3EE] hover:bg-[#FDFCFB]">
+                  <td className="py-3 pr-4 font-semibold text-[#0F0F0E]">{d.name}</td>
+                  <td className="py-3 pr-4 text-xs text-[#5C5C54]">{d.county}</td>
+                  <td className="py-3 pr-4 font-medium text-[#0F0F0E]">{(d.enrollment / 1000).toFixed(0)}K</td>
+                  <td className="py-3 pr-4">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${d.gradRate >= 90 ? 'bg-[#E4F0EA] text-[#2A6B43]' : 'bg-[#FBF4E3] text-[#B07D1A]'}`}>
+                      {d.gradRate}%
+                    </span>
+                  </td>
+                  <td className="py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-20 h-2 bg-[#F7F3EE] rounded-full overflow-hidden">
+                        <div className="h-2 rounded-full bg-[#1A6B72]" style={{ width: `${d.collegeReady}%` }} />
+                      </div>
+                      <span className="text-xs font-semibold text-[#1A6B72]">{d.collegeReady}%</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-[10px] text-[#A8A49E] mt-3">Source: Texas Education Agency · PEIMS enrollment data · 4-year graduation rate</p>
+      </div>
+
+      {/* ── College Scorecard ── */}
+      <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mt-4">
+        <div className="flex items-start justify-between mb-1">
+          <div>
+            <div className="font-semibold text-sm">College Scorecard — Regional Universities</div>
+            <div className="text-xs text-[#888780] mt-0.5">Student outcomes · US Dept of Education</div>
+          </div>
+          {scorecardStatus === 'ok' && (
+            <span className="text-xs px-2 py-0.5 bg-[#E4F0EA] text-[#2A6B43] rounded font-medium">Live</span>
+          )}
+          {scorecardStatus === 'loading' && (
+            <div className="w-3 h-3 border border-[#E2DDD6] border-t-[#1A6B72] rounded-full animate-spin mt-1" />
+          )}
+        </div>
+        <div className="text-xs text-[#5C5C54] mb-4">Graduation rate · median debt · median earnings 10 yrs after entry</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {scorecardRows.map(s => {
+            const name     = s.name || s['school.name'] || '—'
+            const size     = s.size ?? s['latest.student.size']
+            const gr4      = s.gradRate4yr ?? s['latest.completion.completion_rate_4yr_150nt']
+            const grLT4    = s.gradRateLT4yr ?? s['latest.completion.completion_rate_less_than_4yr_150nt']
+            const gradRate = gr4 ?? grLT4
+            const debt     = s.medianDebt ?? s['latest.aid.median_debt.completers.overall']
+            const earn     = s.earnings10yr ?? s['latest.earnings.10_yrs_after_entry.median']
+            return (
+              <div key={s.id} className="border border-[#E2DDD6] rounded-xl p-4">
+                <div className="font-semibold text-sm text-[#0F0F0E] mb-3">{name}</div>
+                {[
+                  { label: 'Enrollment',       val: size    ? `${(size / 1000).toFixed(1)}K students` : '—' },
+                  { label: 'Graduation Rate',  val: gradRate ? `${Math.round(gradRate * 100)}%`        : '—' },
+                  { label: 'Median Debt',      val: debt    ? `$${(debt / 1000).toFixed(0)}K`         : '—' },
+                  { label: 'Earnings (10yr)',  val: earn    ? `$${(earn / 1000).toFixed(0)}K/yr`      : '—' },
+                ].map(r => (
+                  <div key={r.label} className="flex items-center justify-between py-1.5 border-b border-[#F7F3EE] last:border-0">
+                    <span className="text-xs text-[#5C5C54]">{r.label}</span>
+                    <span className="text-xs font-semibold text-[#0F0F0E]">{r.val}</span>
+                  </div>
+                ))}
+              </div>
+            )
+          })}
+        </div>
+        <p className="text-[10px] text-[#A8A49E] mt-3">
+          Source: US Dept of Education College Scorecard API · {scorecardStatus === 'ok' ? 'Live data' : 'Estimated figures'}
+        </p>
       </div>
     </div>
   )
