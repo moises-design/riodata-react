@@ -240,13 +240,11 @@ export const BLS_SERIES = {
   mcallen_bizsvcs:  'SMU48325806000000001',  // professional & biz svcs, supersector 06x
   mcallen_edhealth: 'SMU48325806500000001',  // education & health, supersector 065
   mcallen_govt:     'SMU48325809000000001',  // government, supersector 09
-  mcallen_ur:       'MCALLTX5URN',   // BLS LAU metro unemployment rate
-  laredo_ur:        'LARDO548URN',
-  brownsville_ur:   'BRNSVTX5URN',
+  // UR rates: FRED-specific URN series — handled via UR_HARDCODED in fetchFREDRegional, not sent to BLS proxy
 }
 
 export async function fetchBLS() {
-  const ckey = 'rd_bls_v5' // bumped: LAU series → URN series
+  const ckey = 'rd_bls_v6' // bumped: removed URN series from batch (handled by UR_HARDCODED)
   const cached = getCache(ckey)
   if (cached) return cached
 
