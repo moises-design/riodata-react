@@ -12,7 +12,7 @@ const COUNTIES = [
         seat: 'Edinburg',
         home: 'UTRGV, McAllen International Airport, Pharr International Bridge',
         sectors: ['Healthcare', 'Retail', 'Agriculture', 'Manufacturing'],
-        img: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=400',
+        img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400',
     },
     {
         name: 'Cameron County',
@@ -21,7 +21,7 @@ const COUNTIES = [
         seat: 'Brownsville',
         home: 'SpaceX Starbase, Port of Brownsville, TSTC',
         sectors: ['Energy/LNG', 'Aerospace', 'Logistics', 'Education'],
-        img: 'https://images.unsplash.com/photo-1446776877081-d282a0f896e2?w=400',
+        img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Queen_Isabella_Causeway.jpg/1280px-Queen_Isabella_Causeway.jpg',
     },
     {
         name: 'Starr County',
@@ -30,7 +30,7 @@ const COUNTIES = [
         seat: 'Rio Grande City',
         home: 'Roma International Bridge, Rio Grande City port of entry',
         sectors: ['Agriculture', 'Government', 'Cross-border trade'],
-        img: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=400',
+        img: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400',
     },
     {
         name: 'Webb County',
@@ -39,7 +39,7 @@ const COUNTIES = [
         seat: 'Laredo',
         home: 'World Trade Bridge (#1 US land port), TAMIU, Colombia Solidarity Bridge',
         sectors: ['Logistics', 'Manufacturing', 'Trade', 'Government'],
-        img: 'https://images.unsplash.com/photo-1494522855154-9297ac14b55f?w=400',
+        img: 'https://images.unsplash.com/photo-1543158266-0066d3ac46e9?w=400',
     },
     {
         name: 'Northern Tamaulipas',
@@ -48,7 +48,7 @@ const COUNTIES = [
         seat: 'Reynosa · Matamoros · Nuevo Laredo',
         home: '350+ maquiladoras, Pharr-Reynosa bridge, Matamoros industrial parks',
         sectors: ['Manufacturing', 'Electronics', 'Automotive', 'Aerospace'],
-        img: 'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=400',
+        img: 'https://images.unsplash.com/photo-1565043589221-1a6fd9ae45c7?w=400',
     },
 ]
 
