@@ -88,6 +88,22 @@ function getCoords(city, country, index) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Map() {
+  if (!import.meta.env.VITE_MAPBOX_TOKEN) {
+    return (
+      <div className="flex flex-col items-center justify-center" style={{ height: 'calc(100vh - 56px)' }}>
+        <div className="max-w-md text-center px-6">
+          <div className="text-4xl mb-4">🗺️</div>
+          <h2 className="font-serif text-2xl font-bold text-[#0F0F0E] mb-2">Map Unavailable</h2>
+          <p className="text-sm text-[#5C5C54] mb-4">
+            The Mapbox token (<code className="bg-[#F7F3EE] px-1 rounded text-xs">VITE_MAPBOX_TOKEN</code>) is not set.
+          </p>
+          <p className="text-xs text-[#888780]">
+            Add it to your Vercel environment variables and redeploy, or to <code className="bg-[#F7F3EE] px-1 rounded">.env</code> for local dev.
+          </p>
+        </div>
+      </div>
+    )
+  }
   const navigate       = useNavigate()
   const containerRef   = useRef(null)
   const mapRef         = useRef(null)
