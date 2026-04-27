@@ -1116,6 +1116,71 @@ export default function Analytics() {
         ) : null}
       </div>
 
+      {/* UTRGV ECONOMIC IMPACT */}
+      <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mb-4">
+        <div className="flex items-start justify-between mb-1">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#FF6B00' }}>UTRGV · Economic Impact Study</div>
+            <div className="font-semibold text-sm">UTRGV Economic Impact on the RGV Region</div>
+            <div className="text-xs text-[#888780] mt-0.5">Source: UTRGV Economic Impact Analysis · Fiscal Year Data</div>
+          </div>
+          <span className="text-2xl">🎓</span>
+        </div>
+
+        {/* KPI row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 mb-5">
+          {[
+            { val: '$144.3M', label: 'Total Economic Impact',  sub: 'Annual regional output',     color: '#FF6B00' },
+            { val: '1,028',   label: 'Jobs Supported',         sub: 'Direct & indirect employment', color: '#1A6B72' },
+            { val: '$41.1M',  label: 'Labor Income',           sub: 'Wages & salaries generated', color: '#2A6B43' },
+            { val: '$58.7M',  label: 'Regional GDP Add',       sub: 'Value-added to regional GDP', color: '#B07D1A' },
+          ].map(s => (
+            <div key={s.label} className="bg-[#F7F3EE] rounded-xl p-4">
+              <div className="font-serif text-2xl font-bold mb-0.5" style={{ color: s.color }}>{s.val}</div>
+              <div className="text-xs font-semibold text-[#0F0F0E]">{s.label}</div>
+              <div className="text-[10px] text-[#888780] mt-0.5">{s.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Athletics + Game Day split */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-[#FFF4EE] border border-[#FFD4B8] rounded-xl p-4">
+            <div className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#FF6B00' }}>Athletics Program Growth</div>
+            {[
+              { label: 'Athletics Budget',   before: '$13M',  after: '$31M',   delta: '+$18M' },
+              { label: 'Game Attendance',    before: '45K',   after: '220K',   delta: '+175K' },
+            ].map(r => (
+              <div key={r.label} className="flex items-center justify-between py-2 border-b border-[#FFD4B8] last:border-0">
+                <span className="text-xs font-semibold text-[#0F0F0E]">{r.label}</span>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-[#888780] line-through">{r.before}</span>
+                  <span className="font-bold" style={{ color: '#FF6B00' }}>{r.after}</span>
+                  <span className="text-[10px] text-[#2A6B43] font-semibold">{r.delta}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="bg-[#FFF4EE] border border-[#FFD4B8] rounded-xl p-4">
+            <div className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#FF6B00' }}>Game Day Economic Impact</div>
+            {[
+              { label: 'Game Day Impact',   value: '$9.2M',   sub: 'Per-season visitor spending' },
+              { label: 'Total Fans',        value: '104,474', sub: 'Home game attendance' },
+              { label: 'Visitor Spending',  value: '$88/fan', sub: 'Avg per-visitor spend' },
+            ].map(s => (
+              <div key={s.label} className="flex items-center justify-between py-2 border-b border-[#FFD4B8] last:border-0">
+                <div>
+                  <span className="text-xs font-semibold text-[#0F0F0E]">{s.label}</span>
+                  <div className="text-[10px] text-[#888780]">{s.sub}</div>
+                </div>
+                <span className="text-sm font-bold" style={{ color: '#FF6B00' }}>{s.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="text-[10px] text-[#A8A49E] mt-3">Source: UTRGV Economic Impact Analysis · UTSystem annual reporting</p>
+      </div>
+
       {/* ENERGY & LNG TRACKER (FRED) */}
       <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mb-4">
         <div className="flex items-start justify-between mb-1">
