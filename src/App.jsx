@@ -11,6 +11,7 @@ import Onboarding from './pages/Onboarding'
 import Map from './pages/Map'
 import Profile from './pages/Profile'
 import Membership from './pages/Membership'
+import ResetPassword from './pages/ResetPassword'
 import Nav from './components/Nav'
 import MobileNav from './components/MobileNav'
 
@@ -31,6 +32,7 @@ function App() {
         <Route path="/map" element={<Map />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/membership" element={<Membership />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
       <MobileNav />
     </div>
