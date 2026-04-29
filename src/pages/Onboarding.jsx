@@ -180,7 +180,7 @@ export default function Onboarding() {
                 {step === 3 && (
                     <div>
                         <h2 className="font-serif text-3xl font-bold mb-1">Create Account</h2>
-                        <p className="text-sm text-[#5C5C54] mb-6">Free forever — manage your listing</p>
+                        <p className="text-sm text-[#5C5C54] mb-6">Free forever. Manage your listing.</p>
                         <div className="space-y-4">
                             <div>
                                 <label className="text-xs font-bold uppercase tracking-wider text-[#5C5C54] mb-1 block">Your Name *</label>

@@ -75,7 +75,7 @@ export default function AuthModal({ initialTab = 'signin', onClose }) {
     const { error: err } = await sb.auth.resetPasswordForEmail(email)
     setLoading(false)
     if (err) setError(err.message)
-    else     setSuccess('Password reset email sent — check your inbox.')
+    else     setSuccess('Password reset email sent. Check your inbox.')
   }
 
   async function handleGoogleSignIn() {

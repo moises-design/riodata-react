@@ -447,7 +447,7 @@ export default function Analytics() {
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#1E3A5F] text-slate-300 font-mono">FAA LLS 21-119</span>
                 </div>
                 <h2 className="text-lg font-bold text-white leading-tight">SpaceX Starbase &amp; Aerospace Hub</h2>
-                <p className="text-xs text-slate-400 mt-0.5">The world's only privately owned orbital launch site — and it's in the RioData region</p>
+                <p className="text-xs text-slate-400 mt-0.5">The world's only privately owned orbital launch site, right in the RioData region</p>
               </div>
             </div>
             <span className="flex-shrink-0 text-[10px] font-bold tracking-[0.15em] px-2.5 py-1 rounded-full border border-[#38BDF8] text-[#38BDF8] uppercase">
@@ -866,7 +866,7 @@ export default function Analytics() {
               <div>
                 <div className="font-serif text-3xl text-[#006747] leading-none mb-3 select-none">"</div>
                 <p className="text-sm text-[#1A3D2B] leading-relaxed italic">
-                  Border metro areas — led by Laredo, El Paso, and McAllen — consistently outpace national
+                  Border metro areas, led by Laredo, El Paso, and McAllen, consistently outpace national
                   averages in export-related employment. Nearshoring activity accelerated through 2024, with
                   new manufacturing investment concentrated in Tamaulipas and Chihuahua, the Mexican states
                   directly across from Texas border metros.
@@ -882,7 +882,7 @@ export default function Analytics() {
             <div className="mt-4 flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: '#006747' }}></div>
               <span className="text-[10px] text-[#B8B4AE]">
-                Dallas Fed TEXLEAD · DALTBSOI · EXPMX · TXRSALES — all via FRED API
+                Dallas Fed TEXLEAD · DALTBSOI · EXPMX · TXRSALES, all via FRED API
               </span>
             </div>
           </div>
@@ -920,7 +920,7 @@ export default function Analytics() {
         {/* Employment by sector (BLS live) */}
         <div className="bg-white border border-[#E2DDD6] rounded-xl p-6">
           <div className="flex items-start justify-between mb-1">
-            <div className="font-semibold text-sm">Employment by Sector — McAllen MSA</div>
+            <div className="font-semibold text-sm">Employment by Sector: McAllen MSA</div>
             {status.bls === 'ok' && <LiveBadge />}
           </div>
           <div className="text-xs text-[#5C5C54] mb-4">Nonfarm employment by supersector · BLS SMU series</div>
@@ -945,7 +945,7 @@ export default function Analytics() {
           })}
           {status.bls === 'error' && (
             <div className="mt-3 text-xs text-[#888780] bg-[#F7F3EE] rounded p-2">
-              BLS offline — bars are proportional estimates
+              BLS offline. Bars are proportional estimates
             </div>
           )}
         </div>
@@ -1392,7 +1392,7 @@ export default function Analytics() {
           {/* Chart — 3/4 width */}
           <div className="md:col-span-3">
             <div className="text-xs text-[#5C5C54] font-medium mb-3">
-              Mexico FDI Net Inflows — 10-Year Trend (World Bank)
+              Mexico FDI Net Inflows: 10-Year Trend (World Bank)
             </div>
             {fdi?.length > 0 ? (
               <ResponsiveContainer width="100%" height={180}>
@@ -1482,7 +1482,7 @@ export default function Analytics() {
             <span className="font-semibold text-[#0F0F0E] text-sm">
               McAllen costs {colSavingsPct}% less than Austin
             </span>
-            <span className="text-[#5C5C54]"> — with a growing job market, expanding healthcare sector, and direct access to the largest US–Mexico land trade corridor.</span>
+            <span className="text-[#5C5C54]">, with a growing job market, expanding healthcare sector, and direct access to the largest US–Mexico land trade corridor.</span>
           </div>
         </div>
 
@@ -1491,7 +1491,7 @@ export default function Analytics() {
 
           {/* Overall COL — horizontal bar chart */}
           <div>
-            <div className="text-xs font-medium text-[#5C5C54] mb-3">Overall COL Index — 7-City Comparison</div>
+            <div className="text-xs font-medium text-[#5C5C54] mb-3">Overall COL Index: 7-City Comparison</div>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart
                 layout="vertical"
@@ -1985,7 +1985,7 @@ export default function Analytics() {
         <div className="flex items-center justify-between px-6 py-5 bg-[#E4F0EA] border-b border-[#E2DDD6]">
           <div>
             <div className="text-xs font-bold uppercase tracking-widest text-[#2A6B43] mb-1">Agriculture · USDA</div>
-            <h2 className="font-serif text-xl font-bold text-[#0F0F0E]">RGV — #1 Produce Port in the US</h2>
+            <h2 className="font-serif text-xl font-bold text-[#0F0F0E]">RGV: #1 Produce Port in the US</h2>
             <p className="text-xs text-[#5C5C54] mt-0.5">Hidalgo County leads the nation in fresh produce imports</p>
           </div>
           <span className="text-3xl">🌽</span>
@@ -2142,7 +2142,7 @@ export default function Analytics() {
               { label: 'Healthcare GDP',      value: '$9.3B',  sub: 'Share of regional economy',    color: '#2A6B43' },
               { label: 'Hospitals (RGV)',     value: status.hospitals === 'loading' ? '…' : hospitals ? String(hospitals.count) : '23+', sub: 'Hidalgo, Cameron, Webb', color: '#2A6B43' },
               { label: 'Total Beds',          value: status.hospitals === 'loading' ? '…' : hospitals ? hospitals.totalBeds.toLocaleString() : '3,400+', sub: 'Regional hospital capacity', color: '#1A6B72' },
-              { label: 'UTRGV Med School',    value: '2016',   sub: 'Established — growing pipeline', color: '#5B3FA6' },
+              { label: 'UTRGV Med School',    value: '2016',   sub: 'Established, growing pipeline', color: '#5B3FA6' },
             ].map(s => (
               <div key={s.label} className="bg-[#F7F3EE] rounded-xl p-4">
                 <div className="font-serif text-2xl font-bold mb-1" style={{ color: s.color }}>{s.value}</div>

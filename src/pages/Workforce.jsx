@@ -219,7 +219,7 @@ function OverviewTab({ bls, blsStatus }) {
 
       <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mb-4">
         <div className="flex items-start justify-between mb-1">
-          <div className="font-semibold text-sm">Key Sector Employment — McAllen MSA</div>
+          <div className="font-semibold text-sm">Key Sector Employment: McAllen MSA</div>
           {live && <span className="text-xs px-2 py-0.5 bg-[#E4F0EA] text-[#2A6B43] rounded font-medium">Live BLS</span>}
         </div>
         <div className="text-xs text-[#5C5C54] mb-5">Current employment by supersector · BLS State & Metro Employment</div>
@@ -322,7 +322,7 @@ function JobDemandTab({ bls, blsStatus }) {
 
       <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mb-4">
         <div className="flex items-start justify-between mb-1">
-          <div className="font-semibold text-sm">Sector Employment — McAllen MSA</div>
+          <div className="font-semibold text-sm">Sector Employment: McAllen MSA</div>
           {live && <span className="text-xs px-2 py-0.5 bg-[#E4F0EA] text-[#2A6B43] rounded font-medium">Live BLS</span>}
         </div>
         <div className="text-xs text-[#5C5C54] mb-5">Current nonfarm employment by supersector with year-over-year change</div>
@@ -348,7 +348,7 @@ function JobDemandTab({ bls, blsStatus }) {
         </div>
         {blsStatus === 'error' && (
           <div className="mt-4 text-xs text-[#888780] bg-[#F7F3EE] rounded-lg p-3">
-            BLS API unavailable — employment bars are scaled estimates. Live data will appear when the API is accessible.
+            BLS API unavailable. Employment bars are scaled estimates. Live data will appear when the API is accessible.
           </div>
         )}
       </div>
@@ -437,7 +437,7 @@ function CertificationsTab() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
           { title: 'TWC Training Grants', desc: 'Texas Workforce Commission grants cover up to 100% of training costs for qualified workers. Contact Workforce Solutions offices in McAllen, Laredo, or Brownsville.', icon: '💰' },
-          { title: 'Industry Apprenticeships', desc: 'Joint apprenticeship programs with local employers provide paid training paths for electrical, pipefitting, and CDL certifications — no upfront cost.', icon: '🤝' },
+          { title: 'Industry Apprenticeships', desc: 'Joint apprenticeship programs with local employers provide paid training paths for electrical, pipefitting, and CDL certifications, no upfront cost.', icon: '🤝' },
           { title: 'Stackable Credentials', desc: 'OSHA 10 → OSHA 30 → Safety Manager. CDL Class B → Class A → Tanker Endorsement. Build credential stacks that unlock higher-wage roles progressively.', icon: '📚' },
         ].map(c => (
           <div key={c.title} className="bg-white border border-[#E2DDD6] rounded-xl p-5">
@@ -510,7 +510,7 @@ function EducationPipelineTab() {
     { school: 'Laredo College', location: 'Laredo, TX', type: 'Community College', grads: '2,100', programs: ['CDL Training', 'Welding', 'HVAC', 'Nursing', 'Customs Ops'], match: '89%', matchColor: 'text-[#2A6B43]', note: 'Highest employer match rate in the region' },
     { school: 'South Texas College', location: 'McAllen, TX', type: 'Community College', grads: '4,800', programs: ['Manufacturing Tech', 'IT', 'Business', 'Allied Health', 'Electrical'], match: '81%', matchColor: 'text-[#2A6B43]', note: "Largest community college by enrollment in RGV" },
     { school: 'Texas A&M International', location: 'Laredo, TX', type: 'University', grads: '1,400', programs: ['International Business', 'Engineering', 'Criminal Justice', 'Psychology'], match: '65%', matchColor: 'text-[#B07D1A]', note: 'Strong international trade and logistics focus' },
-    { school: 'UT Health RGV', location: 'McAllen, TX', type: 'Medical School', grads: '320', programs: ['Medicine (MD)', 'Nursing', 'Public Health', 'Pharmacy'], match: '94%', matchColor: 'text-[#2A6B43]', note: 'First medical school in RGV — addresses critical healthcare gap' },
+    { school: 'UT Health RGV', location: 'McAllen, TX', type: 'Medical School', grads: '320', programs: ['Medicine (MD)', 'Nursing', 'Public Health', 'Pharmacy'], match: '94%', matchColor: 'text-[#2A6B43]', note: 'First medical school in RGV, addressing a critical healthcare gap' },
     { school: 'Texas Southmost College', location: 'Brownsville, TX', type: 'Community College', grads: '1,800', programs: ['Welding', 'Cosmetology', 'Automotive', 'Office Tech', 'Nursing Asst'], match: '77%', matchColor: 'text-[#B07D1A]', note: 'Strongest trade & vocational enrollment' },
   ]
 
@@ -540,7 +540,7 @@ function EducationPipelineTab() {
       </div>
 
       <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mb-4">
-        <div className="font-semibold text-sm mb-1">Annual Graduate Output — Regional Pipeline</div>
+        <div className="font-semibold text-sm mb-1">Annual Graduate Output: Regional Pipeline</div>
         <div className="text-xs text-[#5C5C54] mb-5">Total graduates from partner institutions</div>
         <div className="h-28 flex items-end gap-8">
           {pipeline.map(p => (
@@ -603,7 +603,7 @@ function EducationPipelineTab() {
 
       {/* ── Census Education Attainment ── */}
       <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mt-4">
-        <div className="font-semibold text-sm mb-1">Education Attainment — Bachelor's Degree or Higher</div>
+        <div className="font-semibold text-sm mb-1">Education Attainment: Bachelor's Degree or Higher</div>
         <div className="text-xs text-[#5C5C54] mb-5">% of population 25+ · Census ACS 5-year estimates</div>
         <div className="space-y-3">
           {ATTAINMENT.map(a => (
@@ -628,7 +628,7 @@ function EducationPipelineTab() {
 
       {/* ── TEA District Data ── */}
       <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mt-4">
-        <div className="font-semibold text-sm mb-1">K-12 District Data — Texas Education Agency</div>
+        <div className="font-semibold text-sm mb-1">K-12 District Data: Texas Education Agency</div>
         <div className="text-xs text-[#5C5C54] mb-4">Enrollment, graduation rate, and college-readiness · TEA Accountability Reports</div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -670,7 +670,7 @@ function EducationPipelineTab() {
       <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mt-4">
         <div className="flex items-start justify-between mb-1">
           <div>
-            <div className="font-semibold text-sm">College Scorecard — Regional Universities</div>
+            <div className="font-semibold text-sm">College Scorecard: Regional Universities</div>
             <div className="text-xs text-[#888780] mt-0.5">Student outcomes · US Dept of Education</div>
           </div>
           {scorecardStatus === 'ok' && (
@@ -880,7 +880,7 @@ function FederalContractsTab() {
             </div>
             {!isLive && (
               <div className="mt-3 text-xs text-[#888780] bg-[#F7F3EE] rounded-lg p-3">
-                {error ? 'USASpending.gov API unavailable — showing regional contract estimates.' : 'Showing representative contract data for the region.'}
+                {error ? 'USASpending.gov API unavailable. Showing regional contract estimates.' : 'Showing representative contract data for the region.'}
               </div>
             )}
           </>

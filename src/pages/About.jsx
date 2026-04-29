@@ -19,7 +19,7 @@ export default function About() {
                     <div>
                         <h2 className="font-serif text-3xl font-bold mb-4">Why we built this</h2>
                         <p className="text-sm text-[#5C5C54] leading-relaxed mb-4">
-                            The Rio Grande Valley and Laredo corridor moves more cross-border trade than any other land border in the US. $370 billion a year flows through here — yet the businesses, workforce, and institutions that make it happen have no shared platform to connect, grow, and compete.
+                            The Rio Grande Valley and Laredo corridor moves more cross-border trade than any other land border in the US. $370 billion a year flows through here, yet the businesses, workforce, and institutions that make it happen have no shared platform to connect, grow, and compete.
                         </p>
                         <p className="text-sm text-[#5C5C54] leading-relaxed mb-4">
                             Companies in Reynosa can't find contractors in Laredo. Universities don't know what certifications employers actually need. EDCs pitch investors without real-time data. Projects worth hundreds of millions go to outside companies because local businesses aren't visible.

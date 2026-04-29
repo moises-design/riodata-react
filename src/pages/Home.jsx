@@ -4,10 +4,6 @@ import { sb } from '../lib/supabase'
 import { fetchBorderWaitTimes, fetchRegionalNews, fetchSpaceXLaunches } from '../lib/apis'
 
 // ─── County / Region cards ────────────────────────────────────────────────────
-// To swap in your own RGV photos:
-// 1. Drop your image file into /public/images/ (e.g. hidalgo.jpg)
-// 2. Set img to '/images/hidalgo.jpg'
-// Or paste any direct image URL into the img field.
 const COUNTIES = [
     {
         name: 'Hidalgo County',
@@ -37,22 +33,13 @@ const COUNTIES = [
         img: '/images/starr.jpeg',
     },
     {
-        name: 'Webb County',
+        name: 'Willacy County',
         flag: '🇺🇸',
-        population: '267K',
-        seat: 'Laredo',
-        home: 'World Trade Bridge (#1 US land port), TAMIU, Colombia Solidarity Bridge',
-        sectors: ['Logistics', 'Manufacturing', 'Trade', 'Government'],
-        img: '/images/webb.jpeg',
-    },
-    {
-        name: 'Northern Tamaulipas',
-        flag: '🇲🇽',
-        population: '1.2M+',
-        seat: 'Reynosa · Matamoros · Nuevo Laredo',
-        home: '350+ maquiladoras, Pharr-Reynosa bridge, Matamoros industrial parks',
-        sectors: ['Manufacturing', 'Electronics', 'Automotive', 'Aerospace'],
-        img: '/images/tamaulipas.jpeg',
+        population: '21K',
+        seat: 'Raymondville',
+        home: 'One of Texas\'s top agricultural producers, Willacy County Airport',
+        sectors: ['Agriculture', 'Government', 'Healthcare'],
+        img: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=600&q=80',
     },
 ]
 
@@ -193,7 +180,7 @@ export default function Home() {
                             <em className="block not-italic font-light text-[#B8431E]">American metro.</em>
                         </h1>
                         <p className="text-base text-[#5C5C54] leading-relaxed max-w-md mb-8">
-                            From Laredo to Brownsville and across Northern Mexico — one free platform to connect businesses, develop the workforce, and compete with the biggest cities in the country.
+                            From Laredo to Brownsville and across Northern Mexico, one free platform to connect businesses, develop the workforce, and compete with the biggest cities in the country.
                         </p>
                         <div className="flex gap-3 flex-wrap">
                             <Link to="/onboarding" className="px-6 py-3 bg-[#1A6B72] text-white rounded-lg font-semibold text-sm hover:bg-[#155960] transition-all shadow-sm">
@@ -294,7 +281,7 @@ export default function Home() {
                     {[
                         ['$370B', 'Annual Cross-Border Trade', 'More than any other U.S. land border crossing.'],
                         ['38%', 'Younger Than 25', 'One of the youngest regional workforces in the nation.'],
-                        ['$9.3B', 'Active Project Pipeline', 'LNG, data centers, manufacturing — seeking local companies.'],
+                        ['$9.3B', 'Active Project Pipeline', 'LNG, data centers, manufacturing seeking local companies.'],
                         ['94%', 'Bilingual Workforce', 'Unique advantage for cross-border business operations.'],
                     ].map(([num, title, desc]) => (
                         <div key={title} className="bg-white p-7">
@@ -317,7 +304,7 @@ export default function Home() {
                     Built in and for the Rio Grande Valley.
                 </h2>
                 <p className="text-sm text-white/40 mb-10 max-w-xl">
-                    From Webb County to the Gulf, and across the river into Tamaulipas — this is the binational metro RioData was built to serve.
+                    From the Rio Grande to the Gulf Coast, this is the South Texas region RioData was built to serve.
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -354,7 +341,7 @@ export default function Home() {
                             <div className="text-[10px] font-bold tracking-widest text-[#4ECDC4] uppercase mb-3">Binational Advantage</div>
                             <h3 className="font-serif text-lg font-bold text-white mb-2">One market.<br />Two countries.</h3>
                             <p className="text-xs text-white/50 leading-relaxed">
-                                The RGV–Tamaulipas corridor moves over $370B in goods annually — more than any land border on Earth. RioData connects both sides.
+                                The RGV–Tamaulipas corridor moves over $370B in goods annually, more than any land border on Earth. RioData connects both sides.
                             </p>
                         </div>
                         <Link to="/analytics" className="mt-6 text-xs font-bold text-[#4ECDC4] hover:text-white transition-colors">

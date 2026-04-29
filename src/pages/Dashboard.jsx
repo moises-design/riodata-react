@@ -205,7 +205,7 @@ export default function Dashboard() {
       }
       built.push({ id: 'market', level: 'green', icon: '📈', title: 'Market Conditions: Growing', body: 'South Texas metros showing positive employment trends Q1 2025.' })
       if (built.length < 4) {
-        built.push({ id: 'starbase', level: 'blue', icon: '🚀', title: 'Starbase Launch Activity', body: 'SpaceX Starbase expansion continues — 8 launches projected in 2025.' })
+        built.push({ id: 'starbase', level: 'blue', icon: '🚀', title: 'Starbase Launch Activity', body: 'SpaceX Starbase expansion continues, with 8 launches projected in 2025.' })
       }
       setAlerts(built)
     })
