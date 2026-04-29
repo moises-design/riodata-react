@@ -16,7 +16,7 @@ const COUNTIES = [
         seat: 'Edinburg',
         home: 'UTRGV, McAllen International Airport, Pharr International Bridge',
         sectors: ['Healthcare', 'Retail', 'Agriculture', 'Manufacturing'],
-        img: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&q=80',
+        img: '/images/hidalgo.jpeg',
     },
     {
         name: 'Cameron County',
@@ -25,7 +25,7 @@ const COUNTIES = [
         seat: 'Brownsville',
         home: 'SpaceX Starbase, Port of Brownsville, TSTC',
         sectors: ['Energy/LNG', 'Aerospace', 'Logistics', 'Education'],
-        img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80',
+        img: '/images/cameron.jpeg',
     },
     {
         name: 'Starr County',
@@ -34,7 +34,7 @@ const COUNTIES = [
         seat: 'Rio Grande City',
         home: 'Roma International Bridge, Rio Grande City port of entry',
         sectors: ['Agriculture', 'Government', 'Cross-border trade'],
-        img: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=600&q=80',
+        img: '/images/starr.jpeg',
     },
     {
         name: 'Webb County',
@@ -43,7 +43,7 @@ const COUNTIES = [
         seat: 'Laredo',
         home: 'World Trade Bridge (#1 US land port), TAMIU, Colombia Solidarity Bridge',
         sectors: ['Logistics', 'Manufacturing', 'Trade', 'Government'],
-        img: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&q=80',
+        img: '/images/webb.jpeg',
     },
     {
         name: 'Northern Tamaulipas',
@@ -52,7 +52,7 @@ const COUNTIES = [
         seat: 'Reynosa · Matamoros · Nuevo Laredo',
         home: '350+ maquiladoras, Pharr-Reynosa bridge, Matamoros industrial parks',
         sectors: ['Manufacturing', 'Electronics', 'Automotive', 'Aerospace'],
-        img: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=80',
+        img: '/images/tamaulipas.jpeg',
     },
 ]
 
