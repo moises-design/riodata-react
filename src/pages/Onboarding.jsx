@@ -31,6 +31,9 @@ export default function Onboarding() {
             })
             if (authError) throw authError
 
+            const userId = authData.user?.id
+            if (!userId) throw new Error('Account creation failed — no user ID returned. Please try again.')
+
             const { error: compError } = await sb.from('companies').insert({
                 legal_name: form.legal_name,
                 city: form.city,
@@ -47,7 +50,7 @@ export default function Onboarding() {
                 cert_hubzone: form.cert_hubzone,
                 cert_immex: form.cert_immex,
                 status: 'pending',
-                submitted_by: authData.user?.id
+                submitted_by: userId
             })
             if (compError) throw compError
             setStep(4)
