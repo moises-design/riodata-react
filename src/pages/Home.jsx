@@ -482,7 +482,7 @@ export default function Home() {
                         The Rio Grande Valley<br />is open for business.
                     </h2>
                     <p className="text-white/60 mb-10 text-base leading-relaxed">
-                        Join {counts.companies > 0 ? `${counts.companies}+` : '269+'} companies already on RioData.<br />Free to start. Powerful when you grow.
+                        Join {counts.companies > 0 ? `${counts.companies}+` : '269+'} companies already on RioData.<br />Free. Always. No fees, no paywalls.
                     </p>
                     <div className="flex gap-4 justify-center flex-wrap">
                         <Link

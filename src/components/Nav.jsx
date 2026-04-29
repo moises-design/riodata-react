@@ -46,7 +46,6 @@ export default function Nav() {
     ['Workforce',     '/workforce'],
     ['Companies',     '/directory'],
     ['Opportunities', '/opportunities'],
-    ['Membership',    '/membership'],
     ['About',         '/about'],
   ]
 
@@ -105,11 +104,6 @@ export default function Nav() {
                     onClick={() => setDropOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-3 text-sm text-[#0F0F0E] hover:bg-[#F7F3EE] transition border-t border-[#F0EDE8]">
                     <span className="text-base">👤</span> Profile
-                  </Link>
-                  <Link to="/membership"
-                    onClick={() => setDropOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-3 text-sm text-[#0F0F0E] hover:bg-[#F7F3EE] transition border-t border-[#F0EDE8]">
-                    <span className="text-base">⭐</span> Membership
                   </Link>
                   <button
                     onClick={signOut}

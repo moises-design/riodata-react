@@ -306,9 +306,6 @@ export default function Dashboard() {
                 {roleInfo.icon} {roleInfo.label}
               </span>
             )}
-            <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-[#FBF4E3] text-[#B07D1A] border border-[#E8D9A8]">
-              ⭐ Explorer
-            </span>
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <span className="text-[#5C5C54]">South Texas region</span>
@@ -690,7 +687,7 @@ export default function Dashboard() {
               { icon: '🔍', title: 'Directory',       desc: 'Find & connect',          path: '/directory'   },
               { icon: '📋', title: 'Opportunities',   desc: 'Active bids & listings',  path: '/opportunities'},
               { icon: '🗺️', title: 'Map',             desc: 'Interactive company map', path: '/map'         },
-              { icon: '⭐', title: 'Membership',      desc: 'Upgrade your plan',       path: '/membership'  },
+              { icon: '🎓', title: 'Workforce',       desc: 'Skills & pipelines',      path: '/workforce'   },
             ].map(a => (
               <button key={a.title} onClick={() => navigate(a.path)}
                 className="bg-white border border-[#E2DDD6] rounded-xl p-4 text-left hover:border-[#1A6B72] hover:-translate-y-0.5 hover:shadow-md transition-all group">
