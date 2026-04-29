@@ -194,20 +194,20 @@ export default function Analytics() {
   }, [])
 
   // ── Computed KPIs ────────────────────────────────────────────────────────────
-  const gdpM = ['mcallen_gdp', 'laredo_gdp', 'brownsville_gdp'].map(k => fredVal(fred, k))
+  const gdpM = ['mcallen_gdp', 'brownsville_gdp'].map(k => fredVal(fred, k))
   const totalGDP = gdpM.every(Boolean) ? gdpM.reduce((a, b) => a + b, 0) : null
 
-  const empK = [BLS_SERIES.mcallen_emp, BLS_SERIES.laredo_emp, BLS_SERIES.brownsville_emp]
+  const empK = [BLS_SERIES.mcallen_emp, BLS_SERIES.brownsville_emp]
     .map(id => blsVal(bls, id))
   const totalEmp = empK.every(Boolean) ? empK.reduce((a, b) => a + b, 0) * 1000 : null
 
-  const urVals = [BLS_SERIES.mcallen_ur, BLS_SERIES.laredo_ur, BLS_SERIES.brownsville_ur]
+  const urVals = [BLS_SERIES.mcallen_ur, BLS_SERIES.brownsville_ur]
     .map(id => blsVal(bls, id)).filter(Boolean)
   const avgUR = urVals.length ? (urVals.reduce((a, b) => a + b, 0) / urVals.length).toFixed(1) : null
 
   // FRED UR (may differ from BLS direct — shows FRED data when available)
   const fredURMcallen     = fredVal(fred, 'mcallen_ur')
-  const fredURVals        = ['mcallen_ur', 'laredo_ur', 'brownsville_ur'].map(k => fredVal(fred, k)).filter(Boolean)
+  const fredURVals        = ['mcallen_ur', 'brownsville_ur'].map(k => fredVal(fred, k)).filter(Boolean)
   const avgURFred         = fredURVals.length ? (fredURVals.reduce((a, b) => a + b, 0) / fredURVals.length).toFixed(1) : null
 
   const displayUR = avgURFred ?? avgUR
@@ -218,17 +218,15 @@ export default function Analytics() {
   // ── GDP chart data (FRED, last 5 annual obs, oldest→newest) ──────────────────
   const gdpTrend = (() => {
     const mc = (fred?.mcallen_gdp     || []).slice(0, 6).reverse()
-    const la = (fred?.laredo_gdp      || []).slice(0, 6).reverse()
     const bv = (fred?.brownsville_gdp || []).slice(0, 6).reverse()
     return mc.map((d, i) => ({
       year:        d.date.slice(0, 4),
       mcallen:     d.value,
-      laredo:      la[i]?.value ?? 0,
       brownsville: bv[i]?.value ?? 0,
     }))
   })()
   const gdpMax = gdpTrend.length
-    ? Math.max(...gdpTrend.flatMap(d => [d.mcallen, d.laredo, d.brownsville]))
+    ? Math.max(...gdpTrend.flatMap(d => [d.mcallen, d.brownsville]))
     : 1
 
   // ── BLS sector data ──────────────────────────────────────────────────────────
@@ -264,7 +262,7 @@ export default function Analytics() {
     return Object.values(dateMap).sort((a, b) => a.date.localeCompare(b.date)).slice(-12)
   })()
   const btsLatest = {
-    Laredo:      bts?.Laredo?.[0],
+
     Hidalgo:     bts?.Hidalgo?.[0],
     Brownsville: bts?.Brownsville?.[0],
   }
@@ -414,7 +412,7 @@ export default function Analytics() {
           {
             val:   displayUR ? displayUR + '%' : '4.8%*',
             label: 'Avg Unemployment',
-            sub:   displayUR ? (avgURFred ? 'FRED · 3-MSA avg' : 'BLS LAU · 3-MSA avg') : 'Estimate',
+            sub:   displayUR ? (avgURFred ? 'FRED · 2-MSA avg' : 'BLS LAU · 2-MSA avg') : 'Estimate',
             live:  urLive,
           },
         ].map(k => (
@@ -427,6 +425,71 @@ export default function Analytics() {
             <div className="text-xs text-[#888780] mt-0.5">{k.sub}</div>
           </div>
         ))}
+      </div>
+
+      {/* UTRGV ECONOMIC IMPACT */}
+      <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mb-4">
+        <div className="flex items-start justify-between mb-1">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#FF6B00' }}>UTRGV · Economic Impact Study</div>
+            <div className="font-semibold text-sm">UTRGV Economic Impact on the RGV Region</div>
+            <div className="text-xs text-[#888780] mt-0.5">Source: UTRGV Economic Impact Analysis · Fiscal Year Data</div>
+          </div>
+          <span className="text-2xl">🎓</span>
+        </div>
+
+        {/* KPI row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 mb-5">
+          {[
+            { val: '$144.3M', label: 'Total Economic Impact',  sub: 'Annual regional output',     color: '#FF6B00' },
+            { val: '1,028',   label: 'Jobs Supported',         sub: 'Direct & indirect employment', color: '#1A6B72' },
+            { val: '$41.1M',  label: 'Labor Income',           sub: 'Wages & salaries generated', color: '#2A6B43' },
+            { val: '$58.7M',  label: 'Regional GDP Add',       sub: 'Value-added to regional GDP', color: '#B07D1A' },
+          ].map(s => (
+            <div key={s.label} className="bg-[#F7F3EE] rounded-xl p-4">
+              <div className="font-serif text-2xl font-bold mb-0.5" style={{ color: s.color }}>{s.val}</div>
+              <div className="text-xs font-semibold text-[#0F0F0E]">{s.label}</div>
+              <div className="text-[10px] text-[#888780] mt-0.5">{s.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Athletics + Game Day split */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-[#FFF4EE] border border-[#FFD4B8] rounded-xl p-4">
+            <div className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#FF6B00' }}>Athletics Program Growth</div>
+            {[
+              { label: 'Athletics Budget',   before: '$13M',  after: '$31M',   delta: '+$18M' },
+              { label: 'Game Attendance',    before: '45K',   after: '220K',   delta: '+175K' },
+            ].map(r => (
+              <div key={r.label} className="flex items-center justify-between py-2 border-b border-[#FFD4B8] last:border-0">
+                <span className="text-xs font-semibold text-[#0F0F0E]">{r.label}</span>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-[#888780] line-through">{r.before}</span>
+                  <span className="font-bold" style={{ color: '#FF6B00' }}>{r.after}</span>
+                  <span className="text-[10px] text-[#2A6B43] font-semibold">{r.delta}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="bg-[#FFF4EE] border border-[#FFD4B8] rounded-xl p-4">
+            <div className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#FF6B00' }}>Game Day Economic Impact</div>
+            {[
+              { label: 'Game Day Impact',   value: '$9.2M',   sub: 'Per-season visitor spending' },
+              { label: 'Total Fans',        value: '104,474', sub: 'Home game attendance' },
+              { label: 'Visitor Spending',  value: '$88/fan', sub: 'Avg per-visitor spend' },
+            ].map(s => (
+              <div key={s.label} className="flex items-center justify-between py-2 border-b border-[#FFD4B8] last:border-0">
+                <div>
+                  <span className="text-xs font-semibold text-[#0F0F0E]">{s.label}</span>
+                  <div className="text-[10px] text-[#888780]">{s.sub}</div>
+                </div>
+                <span className="text-sm font-bold" style={{ color: '#FF6B00' }}>{s.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="text-[10px] text-[#A8A49E] mt-3">Source: UTRGV Economic Impact Analysis · UTSystem annual reporting</p>
       </div>
 
       {/* ── STARBASE & AEROSPACE TRACKER ─────────────────────────────────────── */}
@@ -586,9 +649,6 @@ export default function Analytics() {
                       <div className="flex-1 bg-[#1A6B72] rounded-t opacity-90 hover:opacity-100 transition-opacity"
                         style={{ height: `${(d.mcallen / gdpMax) * 100}%` }}
                         title={`McAllen ${fmtGDP(d.mcallen)}`}></div>
-                      <div className="flex-1 bg-[#B07D1A] rounded-t opacity-90 hover:opacity-100 transition-opacity"
-                        style={{ height: `${(d.laredo / gdpMax) * 100}%` }}
-                        title={`Laredo ${fmtGDP(d.laredo)}`}></div>
                       <div className="flex-1 bg-[#B8431E] rounded-t opacity-90 hover:opacity-100 transition-opacity"
                         style={{ height: `${(d.brownsville / gdpMax) * 100}%` }}
                         title={`Brownsville ${fmtGDP(d.brownsville)}`}></div>
@@ -598,7 +658,7 @@ export default function Analytics() {
                 ))}
               </div>
               <div className="flex gap-4 mt-3">
-                {[['#1A6B72','McAllen'],['#B07D1A','Laredo'],['#B8431E','Brownsville']].map(([c,l]) => (
+                {[['#1A6B72','McAllen'],['#B8431E','Brownsville']].map(([c,l]) => (
                   <span key={l} className="flex items-center gap-1.5 text-xs text-[#5C5C54]">
                     <span className="w-3 h-3 rounded" style={{ background: c }}></span>{l}
                   </span>
@@ -653,7 +713,7 @@ export default function Analytics() {
               ))}
               {/* Combined total */}
               <div className="flex items-center justify-between rounded-lg px-4 py-3 bg-[#F7F3EE]">
-                <div className="text-sm font-semibold text-[#5C5C54]">3-County Total</div>
+                <div className="text-sm font-semibold text-[#5C5C54]">4-County Total</div>
                 <div className="font-serif text-lg font-bold text-[#0F0F0E]">{fmtK(totalPop)}</div>
               </div>
             </div>
@@ -830,8 +890,8 @@ export default function Analytics() {
                 },
                 {
                   icon:   '🚛',
-                  label:  'Laredo Commercial Crossings',
-                  value:  bts?.Laredo?.[0] ? parseInt(bts.Laredo[0].value).toLocaleString() + '/mo' : '—',
+                  label:  'Hidalgo Commercial Crossings',
+                  value:  bts?.Hidalgo?.[0] ? parseInt(bts.Hidalgo[0].value).toLocaleString() + '/mo' : '—',
                   change: null,
                   sub:    'BTS trucks · most recent month',
                 },
@@ -1115,71 +1175,6 @@ export default function Analytics() {
             IPEDS data unavailable · Urban Institute API may be down
           </div>
         ) : null}
-      </div>
-
-      {/* UTRGV ECONOMIC IMPACT */}
-      <div className="bg-white border border-[#E2DDD6] rounded-xl p-6 mb-4">
-        <div className="flex items-start justify-between mb-1">
-          <div>
-            <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#FF6B00' }}>UTRGV · Economic Impact Study</div>
-            <div className="font-semibold text-sm">UTRGV Economic Impact on the RGV Region</div>
-            <div className="text-xs text-[#888780] mt-0.5">Source: UTRGV Economic Impact Analysis · Fiscal Year Data</div>
-          </div>
-          <span className="text-2xl">🎓</span>
-        </div>
-
-        {/* KPI row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 mb-5">
-          {[
-            { val: '$144.3M', label: 'Total Economic Impact',  sub: 'Annual regional output',     color: '#FF6B00' },
-            { val: '1,028',   label: 'Jobs Supported',         sub: 'Direct & indirect employment', color: '#1A6B72' },
-            { val: '$41.1M',  label: 'Labor Income',           sub: 'Wages & salaries generated', color: '#2A6B43' },
-            { val: '$58.7M',  label: 'Regional GDP Add',       sub: 'Value-added to regional GDP', color: '#B07D1A' },
-          ].map(s => (
-            <div key={s.label} className="bg-[#F7F3EE] rounded-xl p-4">
-              <div className="font-serif text-2xl font-bold mb-0.5" style={{ color: s.color }}>{s.val}</div>
-              <div className="text-xs font-semibold text-[#0F0F0E]">{s.label}</div>
-              <div className="text-[10px] text-[#888780] mt-0.5">{s.sub}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Athletics + Game Day split */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-[#FFF4EE] border border-[#FFD4B8] rounded-xl p-4">
-            <div className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#FF6B00' }}>Athletics Program Growth</div>
-            {[
-              { label: 'Athletics Budget',   before: '$13M',  after: '$31M',   delta: '+$18M' },
-              { label: 'Game Attendance',    before: '45K',   after: '220K',   delta: '+175K' },
-            ].map(r => (
-              <div key={r.label} className="flex items-center justify-between py-2 border-b border-[#FFD4B8] last:border-0">
-                <span className="text-xs font-semibold text-[#0F0F0E]">{r.label}</span>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-[#888780] line-through">{r.before}</span>
-                  <span className="font-bold" style={{ color: '#FF6B00' }}>{r.after}</span>
-                  <span className="text-[10px] text-[#2A6B43] font-semibold">{r.delta}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="bg-[#FFF4EE] border border-[#FFD4B8] rounded-xl p-4">
-            <div className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#FF6B00' }}>Game Day Economic Impact</div>
-            {[
-              { label: 'Game Day Impact',   value: '$9.2M',   sub: 'Per-season visitor spending' },
-              { label: 'Total Fans',        value: '104,474', sub: 'Home game attendance' },
-              { label: 'Visitor Spending',  value: '$88/fan', sub: 'Avg per-visitor spend' },
-            ].map(s => (
-              <div key={s.label} className="flex items-center justify-between py-2 border-b border-[#FFD4B8] last:border-0">
-                <div>
-                  <span className="text-xs font-semibold text-[#0F0F0E]">{s.label}</span>
-                  <div className="text-[10px] text-[#888780]">{s.sub}</div>
-                </div>
-                <span className="text-sm font-bold" style={{ color: '#FF6B00' }}>{s.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <p className="text-[10px] text-[#A8A49E] mt-3">Source: UTRGV Economic Impact Analysis · UTSystem annual reporting</p>
       </div>
 
       {/* ENERGY & LNG TRACKER (FRED) */}

@@ -107,9 +107,10 @@ export async function fetchFREDRegional() {
 // ─── Census API ───────────────────────────────────────────────────────────────
 // ACS 5-year estimates — population + median household income by county
 export const CENSUS_COUNTIES = [
-  { metro: 'McAllen',      county_name: 'Hidalgo County', state: '48', county: '215' },
-  { metro: 'Laredo',       county_name: 'Webb County',    state: '48', county: '479' },
-  { metro: 'Brownsville',  county_name: 'Cameron County', state: '48', county: '061' },
+  { metro: 'McAllen',       county_name: 'Hidalgo County', state: '48', county: '215' },
+  { metro: 'Brownsville',   county_name: 'Cameron County', state: '48', county: '061' },
+  { metro: 'Rio Grande City', county_name: 'Starr County', state: '48', county: '427' },
+  { metro: 'Raymondville',  county_name: 'Willacy County', state: '48', county: '489' },
 ]
 
 export async function fetchCensus() {
