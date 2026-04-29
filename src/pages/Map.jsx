@@ -10,8 +10,6 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 // ─── Static data ───────────────────────────────────────────────────────────────
 
 const CITY_COORDS = {
-  'Laredo':       [-99.5075, 27.5036],
-  'Nuevo Laredo': [-99.5161, 27.4763],
   'McAllen':      [-98.2301, 26.2034],
   'Edinburg':     [-98.1633, 26.3017],
   'Mission':      [-98.3251, 26.2159],
@@ -42,9 +40,7 @@ const SECTOR_COLORS = {
 const SECTORS = ['Construction', 'Energy', 'Manufacturing', 'Logistics', 'Technology', 'Healthcare', 'Government']
 
 const BORDER_CROSSINGS = [
-  { id: '230404', label: 'World Trade Bridge',  coords: [-99.4985, 27.5234], area: 'Laredo',      focus: 'commercial' },
-  { id: '230401', label: 'Gateway to Americas', coords: [-99.5128, 27.4955], area: 'Laredo',      focus: 'passenger'  },
-  { id: '230402', label: 'Juárez–Lincoln',       coords: [-99.5001, 27.4820], area: 'Laredo',      focus: 'passenger'  },
+
   { id: '230502', label: 'Pharr International', coords: [-98.1826, 26.1700], area: 'McAllen',     focus: 'commercial' },
   { id: '230501', label: 'Hidalgo–Reynosa',      coords: [-98.2672, 26.0950], area: 'McAllen',     focus: 'passenger'  },
   { id: '535503', label: 'Los Indios',           coords: [-97.7510, 26.0521], area: 'Brownsville', focus: 'commercial' },
@@ -55,7 +51,7 @@ const BORDER_CROSSINGS = [
 const INDUSTRIAL_PARKS = [
   { name: 'Sharyland Business Park',    coords: [-98.2845, 26.2150], city: 'McAllen'     },
   { name: 'McAllen Foreign Trade Zone', coords: [-98.2301, 26.1950], city: 'McAllen'     },
-  { name: 'Laredo Industrial Park',     coords: [-99.4850, 27.5100], city: 'Laredo'      },
+
   { name: 'South Texas ISD Tech Park',  coords: [-98.2420, 26.1800], city: 'McAllen'     },
   { name: 'Port of Brownsville',        coords: [-97.4610, 25.9900], city: 'Brownsville' },
   { name: 'Boca Chica Industrial',      coords: [-97.1581, 25.9976], city: 'Boca Chica'  },

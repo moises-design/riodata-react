@@ -926,7 +926,7 @@ export default function Analytics() {
               <div>
                 <div className="font-serif text-3xl text-[#006747] leading-none mb-3 select-none">"</div>
                 <p className="text-sm text-[#1A3D2B] leading-relaxed italic">
-                  Border metro areas, led by Laredo, El Paso, and McAllen, consistently outpace national
+                  Border metro areas, led by McAllen and Brownsville, consistently outpace national
                   averages in export-related employment. Nearshoring activity accelerated through 2024, with
                   new manufacturing investment concentrated in Tamaulipas and Chihuahua, the Mexican states
                   directly across from Texas border metros.
@@ -1016,7 +1016,7 @@ export default function Analytics() {
         <div className="flex items-start justify-between mb-1">
           <div>
             <div className="font-semibold text-sm">Cross-Border Truck Traffic</div>
-            <div className="text-xs text-[#888780] mt-0.5">Laredo is the #1 US land port by trade volume</div>
+            <div className="text-xs text-[#888780] mt-0.5">Pharr-Reynosa is the #1 US produce port by volume</div>
           </div>
           <div className="flex items-center gap-2">
             {status.bts === 'ok' && <LiveBadge />}
@@ -1033,8 +1033,7 @@ export default function Analytics() {
         {/* Port stat cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
           {[
-            { port: 'Laredo',      color: '#1A6B72', label: 'Laredo' },
-            { port: 'Hidalgo',     color: '#B07D1A', label: 'Hidalgo / McAllen' },
+            { port: 'Hidalgo',     color: '#1A6B72', label: 'Hidalgo / McAllen' },
             { port: 'Brownsville', color: '#B8431E', label: 'Brownsville' },
           ].map(({ port, color, label }) => {
             const row    = btsLatest[port]
@@ -1063,7 +1062,6 @@ export default function Analytics() {
                 contentStyle={{ fontSize: 12, borderColor: '#E2DDD6', borderRadius: '6px' }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Line type="monotone" dataKey="Laredo"      stroke="#1A6B72" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
               <Line type="monotone" dataKey="Hidalgo"     stroke="#B07D1A" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
               <Line type="monotone" dataKey="Brownsville" stroke="#B8431E" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
             </LineChart>
@@ -1329,7 +1327,7 @@ export default function Analytics() {
           <div className="w-1 h-8 bg-[#B07D1A] rounded-full flex-shrink-0"></div>
           <div className="text-xs text-[#5C5C54] leading-relaxed">
             <span className="font-semibold text-[#0F0F0E]">Tamaulipas hosts more maquiladoras than any other Mexican border state</span>
-            {' '}— with major industrial parks in Reynosa, Matamoros, and Nuevo Laredo directly across from US sister cities in the RioData corridor.
+            with major industrial parks in Reynosa and Matamoros directly across from South Texas.
           </div>
         </div>
 
@@ -1560,7 +1558,6 @@ export default function Analytics() {
                 <ReferenceLine y={100} stroke="#888780" strokeDasharray="4 4" />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Bar dataKey="McAllen"     fill="#1A6B72" radius={[2,2,0,0]} />
-                <Bar dataKey="Laredo"      fill="#B07D1A" radius={[2,2,0,0]} />
                 <Bar dataKey="Brownsville" fill="#B8431E" radius={[2,2,0,0]} />
                 <Bar dataKey="Austin"      fill="#C8C4BE" radius={[2,2,0,0]} />
               </BarChart>
@@ -1649,7 +1646,7 @@ export default function Analytics() {
           </div>
         </div>
         <div className="text-xs text-[#5C5C54] mb-4">
-          Laredo → Mid-Valley → McAllen Area → Brownsville
+          McAllen Area → Mid-Valley → Brownsville
           {cbpLive && ` · ${reportingCount} of ${totalCrossings} crossings reporting`}
         </div>
 
@@ -1672,7 +1669,7 @@ export default function Analytics() {
           </div>
         )}
 
-        {/* Geographic map-style layout: west (Laredo) → east (Brownsville) */}
+        {/* Geographic map-style layout: west (McAllen) → east (Brownsville) */}
         {cbpLive ? (
           <div className="overflow-x-auto pb-2">
             <div className="flex gap-3 min-w-max">
@@ -1800,11 +1797,11 @@ export default function Analytics() {
             </thead>
             <tbody>
               {[
-                ['Auto Parts & Vehicles',   'Laredo',   '$8.4B', '+12%', true],
+                ['Auto Parts & Vehicles',   'Pharr',    '$8.4B', '+12%', true],
                 ['Petroleum / LNG',         'Brownsville','$2.1B', '+31%', true],
                 ['Electronics / Maquiladora','McAllen', '$1.8B', '+8%',  true],
                 ['Fresh Produce',           'Hidalgo',  '$680M', '+4%',  true],
-                ['Steel & Metals',          'Laredo',   '$420M', '-6%',  false],
+                ['Steel & Metals',          'Brownsville','$420M', '-6%',  false],
               ].map(([com, port, vol, yoy, up]) => (
                 <tr key={com} className="border-b border-[#F7F3EE]">
                   <td className="py-3 font-semibold text-[#0F0F0E]">{com}</td>
@@ -1821,7 +1818,7 @@ export default function Analytics() {
       {/* ── REGIONAL ECONOMIC NEWS FEED ──────────────────────────────────────── */}
       {(() => {
         const NEWS_FALLBACKS = [
-          { title: 'Laredo remains top U.S. land port for cross-border trade', url: 'https://www.laredomorningthimes.com', source: 'Laredo Morning Times', publishedAt: '', summary: 'Laredo continues to lead all U.S. ports of entry in total trade value, processing over $300B in annual cargo.', category: 'trade', lang: 'en' },
+          { title: 'Pharr-Reynosa bridge sets new record for truck crossings', url: 'https://www.themonitor.com', source: 'The Monitor', publishedAt: '', summary: 'The Pharr-Reynosa International Bridge processed a record number of commercial trucks, reinforcing South Texas as the top US produce and trade corridor.', category: 'trade', lang: 'en' },
           { title: 'UTRGV launches new engineering programs to meet South Texas workforce demand', url: 'https://www.utrgv.edu', source: 'UTRGV News', publishedAt: '', summary: 'University of Texas Rio Grande Valley expands engineering and STEM offerings to serve the growing manufacturing sector.', category: 'manufacturing', lang: 'en' },
           { title: 'New LNG export terminal breaks ground near Brownsville', url: 'https://www.brownsvilleherald.com', source: 'Brownsville Herald', publishedAt: '', summary: 'Texas LNG and Rio Grande LNG projects advance as South Texas becomes a global energy export hub.', category: 'energy', lang: 'en' },
           { title: 'Reynosa maquiladoras report record employment in auto parts sector', url: 'https://www.elmanana.com', source: 'El Mañana', publishedAt: '', summary: 'Tamaulipas manufacturing zones continue expansion as nearshoring trends bring new investment to the region.', category: 'manufacturing', lang: 'es' },
@@ -2103,7 +2100,7 @@ export default function Analytics() {
               {[
                 { name: 'McAllen',     value: '$164K', ratio: '3.2×', isRGV: true  },
                 { name: 'Brownsville', value: '$121K', ratio: '2.8×', isRGV: true  },
-                { name: 'Laredo',      value: '$152K', ratio: '3.0×', isRGV: true  },
+
                 { name: 'Austin',      value: '$493K', ratio: '6.2×', isRGV: false },
                 { name: 'Dallas',      value: '$318K', ratio: '5.1×', isRGV: false },
                 { name: 'Houston',     value: '$231K', ratio: '4.2×', isRGV: false },
@@ -2127,7 +2124,7 @@ export default function Analytics() {
           <div>
             <div className="text-xs font-bold uppercase tracking-widest text-[#2A6B43] mb-1">Healthcare · CMS Provider Data</div>
             <h2 className="font-serif text-xl font-bold text-[#0F0F0E]">Healthcare & Hospital Capacity</h2>
-            <p className="text-xs text-[#5C5C54] mt-0.5">Hidalgo, Cameron & Webb counties · UTRGV Medical School impact</p>
+            <p className="text-xs text-[#5C5C54] mt-0.5">Hidalgo, Cameron & Starr counties · UTRGV Medical School impact</p>
           </div>
           <span className="text-3xl">🏥</span>
         </div>
@@ -2135,7 +2132,7 @@ export default function Analytics() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             {[
               { label: 'Healthcare GDP',      value: '$9.3B',  sub: 'Share of regional economy',    color: '#2A6B43' },
-              { label: 'Hospitals (RGV)',     value: status.hospitals === 'loading' ? '…' : hospitals ? String(hospitals.count) : '23+', sub: 'Hidalgo, Cameron, Webb', color: '#2A6B43' },
+              { label: 'Hospitals (RGV)',     value: status.hospitals === 'loading' ? '…' : hospitals ? String(hospitals.count) : '23+', sub: 'Hidalgo, Cameron, Starr', color: '#2A6B43' },
               { label: 'Total Beds',          value: status.hospitals === 'loading' ? '…' : hospitals ? hospitals.totalBeds.toLocaleString() : '3,400+', sub: 'Regional hospital capacity', color: '#1A6B72' },
               { label: 'UTRGV Med School',    value: '2016',   sub: 'Established, growing pipeline', color: '#5B3FA6' },
             ].map(s => (
@@ -2153,7 +2150,7 @@ export default function Analytics() {
                 { name: 'DHR Health System',         city: 'Edinburg', specialty: 'Level I Trauma Center' },
                 { name: 'Valley Baptist Medical',    city: 'Harlingen', specialty: 'Regional tertiary care' },
                 { name: 'Doctors Hospital at Renaissance', city: 'Edinburg', specialty: 'Multi-specialty' },
-                { name: 'Laredo Medical Center',     city: 'Laredo', specialty: 'South TX hub' },
+
                 { name: 'Valley Regional Medical',   city: 'Brownsville', specialty: 'Cameron County' },
               ].map(h => (
                 <div key={h.name} className="flex items-start justify-between py-2 border-b border-[#E2DDD6] last:border-0">
@@ -2216,7 +2213,7 @@ export default function Analytics() {
               ) : (
                 <>
                   <div className="font-serif text-3xl font-bold text-[#1A5CB8] mb-1">Live</div>
-                  <div className="text-xs font-semibold text-[#0F0F0E]">Rio Grande at Laredo</div>
+                  <div className="text-xs font-semibold text-[#0F0F0E]">Rio Grande at Rio Grande City</div>
                   <div className="text-[10px] text-[#888780]">USGS gauge 08454100</div>
                 </>
               )}

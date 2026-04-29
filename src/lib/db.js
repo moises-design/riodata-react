@@ -149,7 +149,7 @@ export const SECTOR_SNAPSHOT = {
   Logistics: {
     title: 'Logistics Sector',
     items: [
-      { icon: '🚛', label: 'Laredo Trucks/mo',   value: '155K+',  sub: 'BTS latest month' },
+
       { icon: '🚗', label: 'Border Wait Times',  value: 'Live →', href: '/analytics' },
       { icon: '📦', label: 'US–MX Exports',      value: '$30B+',  sub: 'Monthly via EXPMX' },
     ],

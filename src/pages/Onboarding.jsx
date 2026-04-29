@@ -32,7 +32,7 @@ export default function Onboarding() {
             if (authError) throw authError
 
             const userId = authData.user?.id
-            if (!userId) throw new Error('Account creation failed — no user ID returned. Please try again.')
+            if (!userId) throw new Error('Account creation failed. No user ID returned. Please try again.')
 
             const { error: compError } = await sb.from('companies').insert({
                 legal_name: form.legal_name,
@@ -97,7 +97,7 @@ export default function Onboarding() {
                                 <div>
                                     <label className="text-xs font-bold uppercase tracking-wider text-[#5C5C54] mb-1 block">City *</label>
                                     <input className="w-full px-4 py-3 border border-[#E2DDD6] rounded-xl text-sm focus:outline-none focus:border-[#1A6B72]"
-                                        placeholder="Laredo" value={form.city} onChange={e=>update('city',e.target.value)} />
+                                        placeholder="McAllen" value={form.city} onChange={e=>update('city',e.target.value)} />
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold uppercase tracking-wider text-[#5C5C54] mb-1 block">Country *</label>

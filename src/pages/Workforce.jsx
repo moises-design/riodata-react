@@ -117,11 +117,11 @@ export default function Workforce() {
 
 function OverviewTab({ bls, blsStatus }) {
   const mcallen = latestVal(bls, 'SMU4832580000000001')
-  const laredo = latestVal(bls, 'SMU4829700000000001')
+
   const brownsville = latestVal(bls, 'SMU4815180000000001')
-  const totalEmp = mcallen && laredo && brownsville ? (mcallen + laredo + brownsville) * 1000 : null
+  const totalEmp = mcallen && brownsville ? (mcallen + brownsville) * 1000 : null
   const mcallenUR = latestVal(bls, 'LAUMT482258000000003')
-  const laredoUR = latestVal(bls, 'LAUMT482970000000003')
+
   const live = blsStatus === 'ok'
 
   const kpis = [
@@ -133,7 +133,7 @@ function OverviewTab({ bls, blsStatus }) {
 
   const metros = [
     { name: 'McAllen-Edinburg-Mission', emp: mcallen ? fmtJobs(mcallen * 1000) : '~332,000', ur: mcallenUR ? mcallenUR.toFixed(1) + '%' : null, tag: 'Largest MSA', color: '#1A6B72' },
-    { name: 'Laredo', emp: laredo ? fmtJobs(laredo * 1000) : '~118,000', ur: laredoUR ? laredoUR.toFixed(1) + '%' : null, tag: 'Trade Hub', color: '#B07D1A' },
+
     { name: 'Brownsville-Harlingen', emp: brownsville ? fmtJobs(brownsville * 1000) : '~162,000', ur: null, tag: 'Port Region', color: '#B8431E' },
   ]
 
@@ -374,12 +374,12 @@ function JobDemandTab({ bls, blsStatus }) {
 
 function CertificationsTab() {
   const certs = [
-    { cert: 'CDL Class A', time: '4–6 weeks', salary: '$52K', demand: 'Very High', dc: 'bg-red-50 text-red-700', roi: 'Very High', cost: '$3,500–$7,000', provider: 'Laredo College, STC' },
+    { cert: 'CDL Class A', time: '4–6 weeks', salary: '$52K', demand: 'Very High', dc: 'bg-red-50 text-red-700', roi: 'Very High', cost: '$3,500–$7,000', provider: 'STC' },
     { cert: 'AWS Certified Welding', time: '8–12 weeks', salary: '$48K', demand: 'Very High', dc: 'bg-red-50 text-red-700', roi: 'High', cost: '$2,000–$4,000', provider: 'UTRGV, STC' },
-    { cert: 'NCCER Electrical', time: '12 weeks', salary: '$55K', demand: 'High', dc: 'bg-orange-50 text-orange-700', roi: 'High', cost: '$1,500–$3,000', provider: 'STC, Laredo College' },
+    { cert: 'NCCER Electrical', time: '12 weeks', salary: '$55K', demand: 'High', dc: 'bg-orange-50 text-orange-700', roi: 'High', cost: '$1,500–$3,000', provider: 'STC' },
     { cert: 'OSHA 10 / 30', time: '1–2 weeks', salary: '+$8K', demand: 'High', dc: 'bg-orange-50 text-orange-700', roi: 'Very High', cost: '$150–$300', provider: 'Multiple providers' },
-    { cert: 'C-TPAT / Customs', time: '2 weeks', salary: '$54K', demand: 'High', dc: 'bg-orange-50 text-orange-700', roi: 'High', cost: '$500–$1,200', provider: 'Laredo College' },
-    { cert: 'HVAC EPA 608', time: '6 weeks', salary: '$46K', demand: 'Medium', dc: 'bg-yellow-50 text-yellow-700', roi: 'Medium', cost: '$800–$2,000', provider: 'STC, Laredo' },
+    { cert: 'C-TPAT / Customs', time: '2 weeks', salary: '$54K', demand: 'High', dc: 'bg-orange-50 text-orange-700', roi: 'High', cost: '$500–$1,200', provider: 'STC' },
+    { cert: 'HVAC EPA 608', time: '6 weeks', salary: '$46K', demand: 'Medium', dc: 'bg-yellow-50 text-yellow-700', roi: 'Medium', cost: '$800–$2,000', provider: 'STC' },
     { cert: 'CompTIA Security+', time: '10–14 weeks', salary: '$72K', demand: 'High', dc: 'bg-orange-50 text-orange-700', roi: 'Very High', cost: '$800–$2,000', provider: 'UTRGV, Online' },
     { cert: 'AWS Cloud Practitioner', time: '6–8 weeks', salary: '$68K', demand: 'High', dc: 'bg-orange-50 text-orange-700', roi: 'Very High', cost: '$300–$800', provider: 'Online' },
     { cert: 'PMP Certification', time: '12–16 weeks', salary: '$88K', demand: 'Medium', dc: 'bg-yellow-50 text-yellow-700', roi: 'High', cost: '$500–$1,500', provider: 'UTRGV, PMI' },
@@ -436,7 +436,7 @@ function CertificationsTab() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { title: 'TWC Training Grants', desc: 'Texas Workforce Commission grants cover up to 100% of training costs for qualified workers. Contact Workforce Solutions offices in McAllen, Laredo, or Brownsville.', icon: '💰' },
+          { title: 'TWC Training Grants', desc: 'Texas Workforce Commission grants cover up to 100% of training costs for qualified workers. Contact Workforce Solutions offices in McAllen or Brownsville.', icon: '💰' },
           { title: 'Industry Apprenticeships', desc: 'Joint apprenticeship programs with local employers provide paid training paths for electrical, pipefitting, and CDL certifications, no upfront cost.', icon: '🤝' },
           { title: 'Stackable Credentials', desc: 'OSHA 10 → OSHA 30 → Safety Manager. CDL Class B → Class A → Tanker Endorsement. Build credential stacks that unlock higher-wage roles progressively.', icon: '📚' },
         ].map(c => (
@@ -458,8 +458,8 @@ const TEA_DISTRICTS = [
   { name: 'Edinburg CISD',    county: 'Hidalgo',  enrollment: 32_000, gradRate: 88, collegeReady: 64 },
   { name: 'McAllen ISD',      county: 'Hidalgo',  enrollment: 23_000, gradRate: 93, collegeReady: 71 },
   { name: 'Brownsville ISD',  county: 'Cameron',  enrollment: 46_000, gradRate: 86, collegeReady: 62 },
-  { name: 'Laredo ISD',       county: 'Webb',     enrollment: 24_000, gradRate: 87, collegeReady: 58 },
-  { name: 'United ISD',       county: 'Webb',     enrollment: 42_000, gradRate: 91, collegeReady: 68 },
+
+
   { name: 'PSJA ISD',         county: 'Hidalgo',  enrollment: 32_000, gradRate: 89, collegeReady: 65 },
 ]
 
@@ -467,7 +467,7 @@ const TEA_DISTRICTS = [
 const ATTAINMENT = [
   { name: "Hidalgo Co.", pct: 15, color: '#1A6B72', isRGV: true  },
   { name: "Cameron Co.", pct: 17, color: '#B07D1A', isRGV: true  },
-  { name: "Webb Co.",    pct: 18, color: '#B8431E', isRGV: true  },
+
   { name: "Texas",       pct: 32, color: '#5C5C54', isRGV: false },
   { name: "US",          pct: 35, color: '#888780', isRGV: false },
 ]
@@ -507,9 +507,9 @@ function EducationPipelineTab() {
 
   const schools = [
     { school: 'UTRGV', location: 'Edinburg / Brownsville', type: 'R2 University', grads: '8,200', programs: ['Engineering', 'Computer Science', 'Business', 'Healthcare', 'Biomedical'], match: '72%', matchColor: 'text-[#B07D1A]', note: 'Only R2 research university in deep South Texas' },
-    { school: 'Laredo College', location: 'Laredo, TX', type: 'Community College', grads: '2,100', programs: ['CDL Training', 'Welding', 'HVAC', 'Nursing', 'Customs Ops'], match: '89%', matchColor: 'text-[#2A6B43]', note: 'Highest employer match rate in the region' },
+
     { school: 'South Texas College', location: 'McAllen, TX', type: 'Community College', grads: '4,800', programs: ['Manufacturing Tech', 'IT', 'Business', 'Allied Health', 'Electrical'], match: '81%', matchColor: 'text-[#2A6B43]', note: "Largest community college by enrollment in RGV" },
-    { school: 'Texas A&M International', location: 'Laredo, TX', type: 'University', grads: '1,400', programs: ['International Business', 'Engineering', 'Criminal Justice', 'Psychology'], match: '65%', matchColor: 'text-[#B07D1A]', note: 'Strong international trade and logistics focus' },
+
     { school: 'UT Health RGV', location: 'McAllen, TX', type: 'Medical School', grads: '320', programs: ['Medicine (MD)', 'Nursing', 'Public Health', 'Pharmacy'], match: '94%', matchColor: 'text-[#2A6B43]', note: 'First medical school in RGV, addressing a critical healthcare gap' },
     { school: 'Texas Southmost College', location: 'Brownsville, TX', type: 'Community College', grads: '1,800', programs: ['Welding', 'Cosmetology', 'Automotive', 'Office Tech', 'Nursing Asst'], match: '77%', matchColor: 'text-[#B07D1A]', note: 'Strongest trade & vocational enrollment' },
   ]
@@ -585,7 +585,7 @@ function EducationPipelineTab() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[
             { track: 'Logistics & Cross-Border Trade', steps: 'CDL Class B (STC) → CDL Class A → C-TPAT → Customs Broker License', outcome: '$62K+ avg salary', time: '6–18 months' },
-            { track: 'Industrial Skilled Trades', steps: 'NCCER Core (Laredo College) → Electrical/Pipefitting → Licensed Electrician', outcome: '$58K–$72K avg salary', time: '2–4 years' },
+            { track: 'Industrial Skilled Trades', steps: 'NCCER Core (STC) → Electrical/Pipefitting → Licensed Electrician', outcome: '$58K–$72K avg salary', time: '2–4 years' },
             { track: 'Healthcare & Clinical', steps: 'Allied Health CNA (STC) → LVN → RN (UTRGV) → BSN', outcome: '$48K–$78K avg salary', time: '1–5 years' },
             { track: 'Technology & Cybersecurity', steps: 'CompTIA A+ → Security+ → UTRGV CS degree or AWS certifications', outcome: '$65K–$95K avg salary', time: '1–4 years' },
           ].map(t => (
@@ -735,7 +735,7 @@ function FederalContractsTab() {
             filters: {
               award_type_codes: ['A', 'B', 'C', 'D'],
               place_of_performance_locations: [
-                { country: 'USA', state: 'TX', city: 'Laredo' },
+
                 { country: 'USA', state: 'TX', city: 'McAllen' },
                 { country: 'USA', state: 'TX', city: 'Brownsville' },
                 { country: 'USA', state: 'TX', city: 'Edinburg' },
@@ -767,7 +767,7 @@ function FederalContractsTab() {
     { name: 'Zachry Construction Corp.', amount: '$318M', agency: 'CBP / DHS', naics: 'Infrastructure Construction', end: '2025-11-30' },
     { name: 'Dell Technologies', amount: '$240M', agency: 'GSA / DoD', naics: 'Computer Hardware', end: '2026-08-31' },
     { name: 'Hidalgo County Sheriff', amount: '$92M', agency: 'DHS', naics: 'Border Security Services', end: '2025-12-31' },
-    { name: 'Laredo Community College', amount: '$48M', agency: 'DoEd', naics: 'Workforce Training', end: '2026-05-31' },
+
     { name: 'Rio Grande Electric Coop', amount: '$36M', agency: 'USDA RD', naics: 'Electric Power Distribution', end: '2026-03-31' },
   ]
 

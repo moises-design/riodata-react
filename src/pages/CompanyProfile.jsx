@@ -6,7 +6,7 @@ import { fetchSavedIds, saveCompany, unsaveCompany, logActivity } from '../lib/d
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN
 
 const CITY_COORDS = {
-  'Laredo':[-99.5075,27.5036],'McAllen':[-98.2301,26.2034],'Edinburg':[-98.1633,26.3017],
+  'McAllen':[-98.2301,26.2034],'Edinburg':[-98.1633,26.3017],
   'Mission':[-98.3251,26.2159],'Pharr':[-98.1847,26.1939],'Harlingen':[-97.6961,26.1906],
   'Brownsville':[-97.4975,25.9017],'Hidalgo':[-98.2602,26.1009],'Reynosa':[-98.2977,26.0852],
   'Matamoros':[-97.5032,25.8692],'San Antonio':[-98.4936,29.4241],'Houston':[-95.3698,29.7604],

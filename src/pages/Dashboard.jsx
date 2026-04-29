@@ -53,7 +53,7 @@ function Skeleton({ className = '' }) {
 
 const DEMO_OPPS = [
   { id: 1, title: 'Port of Brownsville LNG Phase 3',   sector: 'Energy',     budget: '$420M', location: 'Brownsville, TX', status: 'Open' },
-  { id: 2, title: 'Laredo International Bridge Exp.',  sector: 'Government', budget: '$85M',  location: 'Laredo, TX',      status: 'Open' },
+  { id: 2, title: 'Pharr-Reynosa Bridge Expansion',    sector: 'Government', budget: '$85M',  location: 'Pharr, TX',       status: 'Open' },
   { id: 3, title: 'SpaceX Starbase Facility Expansion',sector: 'Technology', budget: '$220M', location: 'Brownsville, TX', status: 'Open' },
 ]
 
@@ -157,9 +157,8 @@ export default function Dashboard() {
       let gdp = '$49.5B'
       if (fredData) {
         const m = fredVal(fredData, 'mcallen_gdp')
-        const l = fredVal(fredData, 'laredo_gdp')
         const b = fredVal(fredData, 'brownsville_gdp')
-        if (m && l && b) gdp = fmtGDP(m + l + b)
+        if (m && b) gdp = fmtGDP(m + b)
       }
 
       setStats({ companyCount, oppCount, gdp, avgWait })

@@ -46,13 +46,11 @@ const COUNTIES = [
 // ─── Regional leaders ─────────────────────────────────────────────────────────
 const LEADERS = [
     { name: 'UTRGV', sub: 'Edinburg / Brownsville', sector: 'University', icon: '🎓', url: 'https://www.utrgv.edu' },
-    { name: 'TAMIU', sub: 'Laredo, TX', sector: 'University', icon: '🎓', url: 'https://www.tamiu.edu' },
     { name: 'South Texas College', sub: 'McAllen, TX', sector: 'University', icon: '🎓', url: 'https://www.southtexascollege.edu' },
     { name: 'SpaceX Starbase', sub: 'Boca Chica, TX', sector: 'Aerospace', icon: '🚀', url: 'https://www.spacex.com' },
     { name: 'Doctors Hospital at Renaissance', sub: 'Edinburg, TX', sector: 'Healthcare', icon: '🏥', url: 'https://www.dhr-rgv.com' },
     { name: 'HEB', sub: 'McAllen, TX', sector: 'Retail', icon: '🛒', url: 'https://www.heb.com' },
     { name: 'McAllen EDC', sub: 'McAllen, TX', sector: 'Econ Dev', icon: '📈', url: 'https://www.mcallenedc.com' },
-    { name: 'Laredo EDC', sub: 'Laredo, TX', sector: 'Econ Dev', icon: '📈', url: 'https://www.laredoedc.org' },
     { name: 'Brownsville EDC', sub: 'Brownsville, TX', sector: 'Econ Dev', icon: '📈', url: 'https://www.bedc.com' },
 ]
 
@@ -83,7 +81,7 @@ const TESTIMONIALS = [
     {
         quote: 'The border crossing data alone saves us hours every week in logistics planning.',
         author: 'Logistics Manager',
-        org: 'Laredo',
+        org: 'South Texas',
         initials: 'LM',
         color: 'bg-[#5B3FA6]',
     },
@@ -91,10 +89,10 @@ const TESTIMONIALS = [
 
 // ─── Live activity feed items ─────────────────────────────────────────────────
 const ACTIVITY_ITEMS = [
-    { name: 'Dominion Construction', sub: 'Laredo, TX · Construction', badge: 'READY', color: 'bg-green-900/40 text-green-400' },
+    { name: 'Dominion Construction', sub: 'McAllen, TX · Construction', badge: 'READY', color: 'bg-green-900/40 text-green-400' },
     { name: 'APTIV Reynosa', sub: 'Reynosa, TAM · Manufacturing', badge: 'IMMEX', color: 'bg-purple-900/40 text-purple-400' },
     { name: 'Port of Brownsville LNG Ph.3', sub: '$420M opportunity · Open', badge: 'ENERGY', color: 'bg-teal-900/40 text-teal-400' },
-    { name: 'CBI Group Logistics', sub: 'Laredo · Customs / Freight', badge: 'SAM', color: 'bg-yellow-900/40 text-yellow-400' },
+    { name: 'CBI Group Logistics', sub: 'Pharr, TX · Trade / Logistics', badge: 'SAM', color: 'bg-yellow-900/40 text-yellow-400' },
 ]
 
 // ─── Countdown hook ───────────────────────────────────────────────────────────
@@ -180,7 +178,7 @@ export default function Home() {
                             <em className="block not-italic font-light text-[#B8431E]">American metro.</em>
                         </h1>
                         <p className="text-base text-[#5C5C54] leading-relaxed max-w-md mb-8">
-                            From Laredo to Brownsville and across Northern Mexico, one free platform to connect businesses, develop the workforce, and compete with the biggest cities in the country.
+                            Across South Texas and into Northern Mexico, one free platform to connect businesses, develop the workforce, and compete with the biggest cities in the country.
                         </p>
                         <div className="flex gap-3 flex-wrap">
                             <Link to="/onboarding" className="px-6 py-3 bg-[#1A6B72] text-white rounded-lg font-semibold text-sm hover:bg-[#155960] transition-all shadow-sm">

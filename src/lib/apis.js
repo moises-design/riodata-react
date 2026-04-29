@@ -136,18 +136,9 @@ export async function fetchCensus() {
 // ─── CBP Border Wait Times ────────────────────────────────────────────────────
 // Real-time data from https://bwt.cbp.gov/api/bwtpublicmod — no key required.
 // Port IDs are 6-digit strings (confirmed from CBP app bundle).
-// Organized west-to-east: Laredo → Mid-Valley → McAllen Area → Brownsville.
+// Organized west-to-east: Mid-Valley → McAllen Area → Brownsville.
 export const CBP_PORT_GROUPS = [
-  {
-    area:  'Laredo',
-    color: '#1A6B72',
-    crossings: [
-      { id: '230404', label: 'World Trade Bridge',   focus: 'commercial' },
-      { id: '230401', label: 'Gateway to Americas',  focus: 'passenger'  },
-      { id: '230402', label: 'Juárez–Lincoln',       focus: 'passenger'  },
-      { id: '230403', label: 'Colombia Solidarity',  focus: 'mixed'      },
-    ],
-  },
+
   {
     area:  'Mid-Valley',
     color: '#B07D1A',
@@ -350,7 +341,7 @@ export function fmtBcf(mmcf) {
 // Full dataset requires paid subscription; these figures are publicly cited.
 export const COL_DATA = [
   { city: 'McAllen',     overall: 83.2,  housing:  61, groceries: 88, utilities:  94, healthcare:  89, isSouthTX: true  },
-  { city: 'Laredo',      overall: 82.7,  housing:  58, groceries: 86, utilities:  96, healthcare:  91, isSouthTX: true  },
+
   { city: 'Brownsville', overall: 80.1,  housing:  54, groceries: 85, utilities:  93, healthcare:  88, isSouthTX: true  },
   { city: 'Austin',      overall: 121.4, housing: 158, groceries: 98, utilities:  99, healthcare: 102, isSouthTX: false },
   { city: 'Dallas',      overall: 106.3, housing: 118, groceries: 97, utilities: 101, healthcare:  98, isSouthTX: false },
@@ -381,7 +372,7 @@ export const MAQUILADORA_CITIES = [
   {
     city:       'Nuevo Laredo',
     state:      'Tamaulipas',
-    sisterCity: 'Laredo, TX',
+    sisterCity: 'South Texas',
     distance:   '~1 mi',
     workers:    35_000,
     sectors:    ['Logistics', 'Manufacturing', 'Distribution'],
@@ -483,7 +474,7 @@ export async function fetchBorderCrossings() {
   const ckey = 'rd_bts_crossings_v1'
   const cached = getCache(ckey)
   if (cached) return cached
-  const ports = ['Laredo', 'Hidalgo', 'Brownsville']
+  const ports = ['Hidalgo', 'Brownsville']
   const results = await Promise.allSettled(ports.map(async port => {
     const params = new URLSearchParams({ port_name: port, measure: 'Trucks', $limit: '24', $order: 'date DESC' })
     const res = await fetch(`${BTS_API}?${params}`)
@@ -556,7 +547,7 @@ export async function fetchRegionalNews() {
 }
 
 // ─── CMS Hospital Data ────────────────────────────────────────────────────────
-// Provider data for hospitals in Hidalgo, Cameron, Webb counties
+// Provider data for hospitals in Hidalgo, Cameron, Starr, and Willacy counties
 export async function fetchCMSHospitals() {
   const ckey = 'rd_cms_hospitals_v1'
   const cached = getCache(ckey)
@@ -569,8 +560,8 @@ export async function fetchCMSHospitals() {
   if (json.error) throw new Error(`CMS proxy: ${json.error}`)
   const rows = (json.results || []).filter(h => {
     const zip = String(h.ZIP_CD || '')
-    // RGV zip codes: 785xx (Hidalgo/Cameron), 780xx (Webb/Laredo)
-    return zip.startsWith('785') || zip.startsWith('786') || zip.startsWith('780')
+    // RGV zip codes: 785xx (Hidalgo/Cameron/Starr/Willacy), 786xx (Cameron)
+    return zip.startsWith('785') || zip.startsWith('786')
   })
 
   // Build summary
@@ -581,7 +572,7 @@ export async function fetchCMSHospitals() {
 }
 
 // ─── USGS Water Flow ──────────────────────────────────────────────────────────
-// Rio Grande at Laredo gauge site 08454100 — current flow rate
+// Rio Grande at Rio Grande City gauge site 08454100 — current flow rate
 export async function fetchUSGSWater() {
   const ckey = 'rd_usgs_water_v1'
   const cached = getCache(ckey)
@@ -599,7 +590,7 @@ export async function fetchUSGSWater() {
   const latest = values[values.length - 1]
 
   const data = {
-    siteName:   series.sourceInfo?.siteName || 'Rio Grande at Laredo',
+    siteName:   series.sourceInfo?.siteName || 'Rio Grande at Rio Grande City',
     value:      latest ? parseFloat(latest.value) : null,
     units:      'cfs',
     dateTime:   latest?.dateTime || null,
@@ -652,11 +643,11 @@ export async function fetchCensusHousing() {
   const cached = getCache(ckey)
   if (cached) return cached
 
-  // Counties: Hidalgo(48215), Cameron(48061), Webb(48479), Travis(48453/Austin), Dallas(48113), Harris(48201/Houston)
+  // Counties: Hidalgo(48215), Cameron(48061), Travis(48453/Austin), Dallas(48113), Harris(48201/Houston)
   const counties = [
     { name: 'McAllen',     state:'48', county:'215', group: 'rgv' },
     { name: 'Brownsville', state:'48', county:'061', group: 'rgv' },
-    { name: 'Laredo',      state:'48', county:'479', group: 'rgv' },
+
     { name: 'Austin',      state:'48', county:'453', group: 'tx'  },
     { name: 'Dallas',      state:'48', county:'113', group: 'tx'  },
     { name: 'Houston',     state:'48', county:'201', group: 'tx'  },
